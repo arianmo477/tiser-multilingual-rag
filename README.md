@@ -159,7 +159,7 @@ tiser-multilingual/
 │
 ├── data/
 │   ├── prompts/
-│   │   ├── tiser_full.txt          # English prompt
+│   │   ├── tiser_full_en.txt          # English prompt
 │   │   ├── tiser_full_it.txt       # Italian prompt
 │   │   ├── tiser_full_de.txt       # German prompt
 │   │   └── tiser_full_fr.txt       # French prompt
