@@ -152,18 +152,20 @@ tiser-multilingual/
 
 
 ### Training
-English-only model
-bash tiser_lite/training/run_train.sh qwen en tiser_full 15000
-
+# English-only model
+```bash
+bash multilingual_tiser/training/run_train.sh qwen en tiser_full 15000
+```
 
 Two-language model: EN + IT
 # Build the mixed training file
-bash tiser_lite/preprocess/run_mix_dataset.sh train en,it 15000
+```bash
+bash multilingual_tiser/preprocess/run_mix_dataset.sh train en,it 15000
 
 # Fine-tune
-bash tiser_lite/training/run_train.sh qwen en_it_mixed tiser_full 15000
-
-Key training hyperparameters
+bash multilingual_tiser/training/run_train.sh qwen en_it_mixed tiser_full 15000
+```
+# Key training hyperparameters
 
 | Hyperparameter        | Value                          |
 | --------------------- | ------------------------------ |
