@@ -112,7 +112,7 @@ export PYTHONPATH="$(pwd):${PYTHONPATH:-}"
 
 
 ### Project structure
-
+```bash
 tiser-multilingual/
 │
 ├── tiser_lite/
@@ -148,6 +148,7 @@ tiser-multilingual/
 │       └── test/                   # Per-language test JSONs
 │
 └── experiments/                    # Checkpoints and result JSONs
+```
 
 
 ### Training
