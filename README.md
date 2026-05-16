@@ -12,7 +12,7 @@ The original TISER paper uses Qwen2.5-7B and Mistral-7B on English only. This pr
 
 ## Results
 
-All evaluations use a mixed test set of 500 samples balanced across the five TISER categories: `tgqa`, `tempreason_l2`, `tempreason_l3`, `timeqa_easy`, and `timeqa_hard`.
+Most evaluations use approximately **500 samples** across the five TISER categories: `tgqa`, `tempreason_l2`, `tempreason_l3`, `timeqa_easy`, and `timeqa_hard`. Some runs are exactly balanced with 100 samples per category, while others use a near-balanced split depending on the available filtered samples.
 
 ### English-only model — EN (15 000 training samples)
 
@@ -31,6 +31,26 @@ Per dataset:
 | tempreason_l3 | 0.956 | 96.03 | 0.950 | 0.950 | 0.950 | 100 |
 | tempreason_l2 | 0.840 | 85.05 | 0.810 | 0.810 | 0.810 | 100 |
 | tgqa | 0.854 | 73.46 | 0.550 | 0.520 | 0.860 | 100 |
+
+### Italian-only model — IT, 15k training samples
+
+Evaluated on 500 Italian samples across the five TISER categories.
+
+**Overall**
+
+| F1 | chrF | NormEM | EM | SoftEM | EngLeak |
+|---:|---:|---:|---:|---:|---:|
+| 0.881 | 87.67 | 0.790 | 0.772 | 0.838 | 0.006 |
+
+**Per dataset**
+
+| Dataset | F1 | chrF | NormEM | EM | SoftEM | EngLeak | N |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| timeqa_easy | 0.974 | 97.46 | 0.955 | 0.955 | 0.966 | 0.000 | 88 |
+| timeqa_hard | 0.923 | 94.48 | 0.885 | 0.885 | 0.885 | 0.000 | 96 |
+| tempreason_l3 | 0.892 | 90.14 | 0.860 | 0.822 | 0.879 | 0.028 | 107 |
+| tempreason_l2 | 0.807 | 80.34 | 0.733 | 0.695 | 0.733 | 0.000 | 105 |
+| tgqa | 0.828 | 77.96 | 0.548 | 0.539 | 0.750 | 0.000 | 104 |
 
 ### Two-language model — EN + IT (15 000 training samples)
 
