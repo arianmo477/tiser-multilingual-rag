@@ -1,29 +1,28 @@
 # tiser-multilingual
 
-**Multilingual temporal reasoning with a small language model** — a two-part extension of [TISER](https://aclanthology.org/2025.acl-long.1358/) (Bazaga et al., ACL 2025).
+Multilingual temporal reasoning with a small language model — a two-part extension of [TISER](https://aclanthology.org/2025.acl-long.1358/) (Bazaga et al., ACL 2025):
 
-### Features
+1. **Small-model adaptation** — Qwen2.5-3B-Instruct + QLoRA on a single 8 GB GPU, matching the spirit of the original paper's reasoning pipeline without requiring 40+ GB of VRAM.
 
-1. **Small-model adaptation** — Qwen2.5-3B-Instruct + QLoRA, running on a single **8 GB GPU**.
-2. **Multilingual extension** — an NLLB-based pipeline for structurally faithful Italian, German, French, and Persian data. One fine-tuned model can handle temporal reasoning across languages.
+2. **Multilingual extension** — an NLLB-based translation pipeline that produces structurally faithful Italian, German, French, and Persian training data, enabling a single fine-tuned model to reason temporally across languages.
 
-Original TISER used 7B models on English only. This project achieves strong performance with a 3B model and adds multilingual capability for EN · IT · DE · FR.
+The original TISER paper uses Qwen2.5-7B and Mistral-7B on English only. This project reaches strong English-only performance with a 3 B model and extends the same temporal-reasoning pipeline to multilingual EN · IT · DE · FR training.
 
 ---
 
 ## Results
 
-All evaluations use a balanced test set of **500 samples** across the five TISER categories: `tgqa`, `tempreason_l2`, `tempreason_l3`, `timeqa_easy`, and `timeqa_hard`.
+All evaluations use a mixed test set of 500 samples balanced across the five TISER categories: `tgqa`, `tempreason_l2`, `tempreason_l3`, `timeqa_easy`, and `timeqa_hard`.
 
-### English-only model — EN, 15k training samples
+### English-only model — EN (15 000 training samples)
 
-**Overall**
+Evaluated on 500 English samples balanced across the five TISER categories:
 
-| F1 | chrF | NormEM | EM | SoftEM | EngLeak |
-|---:|---:|---:|---:|---:|---:|
-| 0.921 | 90.18 | 0.844 | 0.838 | 0.912 | 0.000 |
+| | F1 | chrF | NormEM | EM | SoftEM | EngLeak |
+|---|---:|---:|---:|---:|---:|---:|
+| **Overall** | 0.921 | 90.18 | 0.844 | 0.838 | 0.912 | 0.000 |
 
-**Per dataset**
+Per dataset:
 
 | Dataset | F1 | chrF | NormEM | EM | SoftEM | N |
 |---|---:|---:|---:|---:|---:|---:|
@@ -33,24 +32,17 @@ All evaluations use a balanced test set of **500 samples** across the five TISER
 | tempreason_l2 | 0.840 | 85.05 | 0.810 | 0.810 | 0.810 | 100 |
 | tgqa | 0.854 | 73.46 | 0.550 | 0.520 | 0.860 | 100 |
 
-### Two-language model — EN + IT, 15k training samples
+### Two-language model — EN + IT (15 000 training samples)
 
 Evaluated on 500 samples: 250 English and 250 Italian.
 
-**Overall**
+| | F1 | chrF | NormEM | EM | SoftEM | EngLeak |
+|---|---:|---:|---:|---:|---:|---:|
+| **Overall** | 0.892 | 88.07 | 0.802 | 0.794 | 0.860 | 0.010 |
+| English | 0.911 | 89.34 | 0.836 | 0.832 | 0.900 | 0.000 |
+| Italian | 0.873 | 86.80 | 0.768 | 0.756 | 0.820 | 0.020 |
 
-| F1 | chrF | NormEM | EM | SoftEM | EngLeak |
-|---:|---:|---:|---:|---:|---:|
-| 0.892 | 88.07 | 0.802 | 0.794 | 0.860 | 0.010 |
-
-**Per language**
-
-| Language | F1 | NormEM | EM | SoftEM |
-|---|---:|---:|---:|---:|
-| English | 0.911 | 0.836 | 0.832 | 0.900 |
-| Italian | 0.873 | 0.768 | 0.756 | 0.820 |
-
-**Per dataset**
+Per dataset:
 
 | Dataset | F1 | EM | N |
 |---|---:|---:|---:|
@@ -60,26 +52,19 @@ Evaluated on 500 samples: 250 English and 250 Italian.
 | tempreason_l2 | 0.817 | 0.760 | 100 |
 | tgqa | 0.831 | 0.540 | 100 |
 
-### Four-language model — EN + IT + DE + FR, 15k training samples
+### Four-language model — EN + IT + DE + FR (15 000 training samples)
 
 Evaluated on 500 samples: 125 per language.
 
-**Overall**
+| | F1 | chrF | NormEM | EM | SoftEM | EngLeak |
+|---|---:|---:|---:|---:|---:|---:|
+| **Overall** | 0.888 | 88.14 | 0.798 | 0.792 | 0.856 | 0.006 |
+| English | 0.925 | 91.75 | 0.840 | 0.840 | 0.912 | 0.000 |
+| German | 0.905 | 88.40 | 0.816 | 0.816 | 0.888 | 0.008 |
+| Italian | 0.887 | 89.48 | 0.800 | 0.784 | 0.856 | 0.008 |
+| French | 0.834 | 82.94 | 0.736 | 0.728 | 0.768 | 0.008 |
 
-| F1 | chrF | NormEM | EM | SoftEM | EngLeak |
-|---:|---:|---:|---:|---:|---:|
-| 0.888 | 88.14 | 0.798 | 0.792 | 0.856 | 0.006 |
-
-**Per language**
-
-| Language | F1 | NormEM | EM | SoftEM |
-|---|---:|---:|---:|---:|
-| English | 0.925 | 0.840 | 0.840 | 0.912 |
-| German | 0.905 | 0.816 | 0.816 | 0.888 |
-| Italian | 0.887 | 0.800 | 0.784 | 0.856 |
-| French | 0.834 | 0.736 | 0.728 | 0.768 |
-
-**Per dataset**
+Per dataset:
 
 | Dataset | F1 | EM | N |
 |---|---:|---:|---:|
@@ -93,18 +78,18 @@ Evaluated on 500 samples: 125 per language.
 
 The English-only model gives the strongest overall result, which is expected because it is trained and evaluated only on the original English distribution. The multilingual models trade a small amount of English performance for cross-lingual temporal reasoning ability.
 
-French performance is slightly lower due to translation artifacts in the NLLB pipeline, especially carrier-prefix artifacts and isolated-entity translation noise. `tgqa` remains the hardest category because answers require matching free-form event descriptions rather than mostly entity names or numeric values. EngLeak is very low, meaning the model rarely falls back to English when answering in a non-English language.
+French scores slightly lower than the other languages due to translation quality issues in the NLLB pipeline, especially carrier-prefix artifacts and isolated-entity translation noise. EngLeak remains very low across multilingual models, meaning the fine-tuned model almost never regresses to English when answering in a non-English language. `tgqa` is the hardest category because answers require matching free-form event descriptions rather than mostly entity names or numeric values.
 
 ---
 
-## Comparison with Original TISER
+## What this adds over the original TISER paper
 
-| Aspect | Original TISER | tiser-multilingual |
+| | TISER original | tiser-multilingual |
 |---|---|---|
-| Model | 7B Qwen2.5 / Mistral | **3B** Qwen2.5-Instruct |
-| VRAM | ~40 GB | **8 GB** QLoRA 4-bit |
+| Model | 7 B Qwen2.5 / Mistral | **3 B** Qwen2.5-Instruct |
+| VRAM | ~40 GB | **8 GB** QLoRA 4-bit NF4 |
 | Languages | English only | EN · IT · DE · FR |
-| Training data | English only | English + NLLB-translated data |
+| Training data | English only | English + NLLB-translated multilingual data |
 | Metrics | EM, F1 | EM, NormEM, SoftEM, F1, chrF, EngLeak |
 
 ---
@@ -112,7 +97,7 @@ French performance is slightly lower due to translation artifacts in the NLLB pi
 ## Installation
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/tiser-multilingual.git
+git clone https://github.com/<your-username>/tiser-multilingual.git
 cd tiser-multilingual
 
 conda create -n tiser python=3.10
@@ -123,34 +108,224 @@ pip install transformers peft bitsandbytes datasets tqdm
 pip install "transformers[sentencepiece]" sentence-transformers sacremoses
 
 export PYTHONPATH="$(pwd):${PYTHONPATH:-}"
+```
 
 
-### Project Structure
+### Project structure
+
 tiser-multilingual/
+│
 ├── tiser_lite/
 │   ├── training/
-│   │   ├── train_qlora.py
-│   │   └── run_train.sh
+│   │   ├── train_qlora.py          # QLoRA fine-tuning
+│   │   └── run_train.sh            # Training launcher
+│   │
 │   ├── evaluation/
-│   │   ├── inference.py
-│   │   └── run_eval.sh
+│   │   ├── inference.py            # Inference + metric computation
+│   │   └── run_eval.sh             # Multi-language eval launcher
+│   │
 │   ├── translate/
-│   │   └── translate_dataset.py
-│   ├── preprocess/
-│   │   ├── mix_dataset.py
-│   │   └── run_mix_dataset.sh
-│   └── utils/
-│       ├── metrics.py
-│       ├── prompt.py
-│       ├── translation_utils.py
-│       └── io_gpu.py
+│   │   └── translate_dataset.py    # NLLB translation pipeline
+│   │
+│   └── preprocess/
+│       ├── mix_dataset.py          # Balanced multilingual mixer
+│       └── run_mix_dataset.sh      # Mixer launcher
+│
+├── utils/
+│   ├── metrics.py                  # EM, NormEM, SoftEM, F1, chrF, EngLeak
+│   ├── prompt.py                   # Prompt builder shared by train + eval
+│   ├── translation_utils.py        # Language packs, hallucination filter
+│   └── io_gpu.py                   # JSON I/O, balanced sampling
+│
 ├── data/
 │   ├── prompts/
-│   │   ├── tiser_full.txt
-│   │   ├── tiser_full_it.txt
-│   │   ├── tiser_full_de.txt
-│   │   └── tiser_full_fr.txt
+│   │   ├── tiser_full.txt          # English prompt
+│   │   ├── tiser_full_it.txt       # Italian prompt
+│   │   ├── tiser_full_de.txt       # German prompt
+│   │   └── tiser_full_fr.txt       # French prompt
 │   └── splits/
-│       ├── train/
-│       └── test/
-└── experiments/
+│       ├── train/                  # Per-language + mixed training JSONs
+│       └── test/                   # Per-language test JSONs
+│
+└── experiments/                    # Checkpoints and result JSONs
+
+
+### Training
+English-only model
+bash tiser_lite/training/run_train.sh qwen en tiser_full 15000
+
+
+Two-language model: EN + IT
+# Build the mixed training file
+bash tiser_lite/preprocess/run_mix_dataset.sh train en,it 15000
+
+# Fine-tune
+bash tiser_lite/training/run_train.sh qwen en_it_mixed tiser_full 15000
+
+Key training hyperparameters
+
+| Hyperparameter        | Value                          |
+| --------------------- | ------------------------------ |
+| Base model            | `Qwen/Qwen2.5-3B-Instruct`     |
+| Quantization          | NF4 4-bit, double quantization |
+| LoRA rank / alpha     | 16 / 32                        |
+| LoRA dropout          | 0.05                           |
+| Max sequence length   | 1 536 tokens                   |
+| Per-device batch size | 1                              |
+| Gradient accumulation | 16                             |
+| Optimizer             | `paged_adamw_8bit`             |
+| Learning rate         | 3 × 10⁻⁴                       |
+| Epochs                | 2                              |
+| Validation split      | 10 %                           |
+
+
+
+### Evaluation
+Single language
+bash tiser_lite/evaluation/run_eval.sh qwen en \
+    experiments/qwen/en_15000_8gb_val_qlora/ \
+    iterative tiser_full 500
+
+Two-language model
+bash tiser_lite/evaluation/run_eval.sh qwen en,it \
+    experiments/qwen/en_it_mixed_tiser_full_15000_8gb_val_qlora/ \
+    iterative tiser_full 500
+
+Four-language model
+bash tiser_lite/evaluation/run_eval.sh qwen en,it,de,fr \
+    experiments/qwen/de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora/ \
+    iterative tiser_full 500
+
+This produces one result JSON per language and prints per-language and per-dataset breakdowns automatically at the end of each run.
+
+Aggregating multiple result files
+python tiser_lite/temp.py \
+    experiments/qwen/*/results/gen_*.json \
+    --per_language \
+    --per_dataset
+Metric definitions
+| Metric      | Description                                                                 |
+| ----------- | --------------------------------------------------------------------------- |
+| **EM**      | Strict exact match after text normalization                                 |
+| **NormEM**  | Order-insensitive EM using sorted token bags; catches word-order variants   |
+| **SoftEM**  | Substring containment match in either direction                             |
+| **F1**      | Token-level F1, SQuAD-style                                                 |
+| **chrF**    | Character n-gram F-score, robust to morphology                              |
+| **EngLeak** | Fraction of non-English answers where the model returned the English answer |
+
+Translation pipeline
+
+The multilingual datasets are generated from the English TISER data using NLLB-200-distilled-1.3B
+
+# Italian
+python tiser_lite/translate/translate_dataset.py \
+    --input  data/splits/train/TISER_train_en.json \
+    --output data/splits/train/TISER_train_it.json \
+    --target_lang it \
+    --batch_size 2
+
+# German
+python tiser_lite/translate/translate_dataset.py \
+    --input  data/splits/train/TISER_train_en.json \
+    --output data/splits/train/TISER_train_de.json \
+    --target_lang de \
+    --batch_size 2
+
+# French
+python tiser_lite/translate/translate_dataset.py \
+    --input  data/splits/train/TISER_train_en.json \
+    --output data/splits/train/TISER_train_fr.json \
+    --target_lang fr \
+    --batch_size 2
+
+Design decisions
+
+The translation pipeline has four layers to preserve quality on the structured TISER format.
+
+Entity cache — every parenthesized entity or event, such as (Boston Red Sox) or (Westinghouse Electric), is translated once and reused everywhere it appears. This enforces identical surface forms across samples. The cache is saved to disk and reused across runs, making large translation jobs safe to interrupt and resume.
+
+Proper-noun shortcut — short capitalized entities, such as person names, team abbreviations, and many club names, bypass the translation model entirely. NLLB is unreliable on isolated names and can hallucinate descriptive sentences.
+
+Hallucination detection — after each NLLB call, outputs that elaborate a short input into a descriptive sentence are detected and discarded. In that case, the source string is used as a safer fallback.
+
+Language packs — high-frequency templated phrases, such as "X plays for Y from Z to W", "True or false:", and common question stems, are translated using hand-written per-language rules instead of relying only on NLLB. This keeps temporal contexts structurally consistent and helps preserve dates.
+
+Translation quality scoring
+
+Translated samples can be checked before training:
+
+bash tiser_lite/translate/run_score.sh train
+
+The scorer checks the translated fields:
+
+question
+temporal_context
+answer
+output
+
+It validates semantic similarity, missing years, empty parentheses, missing TISER tags, answer consistency, and leftover English phrases. Samples below the quality threshold can be separated into passed and failed files before training.
+
+TISER reasoning format
+
+The model produces a four-section structured trace:
+
+<reasoning>
+  [Step-by-step temporal reasoning in plain paragraph form]
+  <timeline>
+    [Key events extracted from the context, with dates]
+  </timeline>
+  <reflection>
+    [Self-review and correction of the reasoning]
+  </reflection>
+</reasoning>
+
+<answer>
+  [Final concise answer]
+</answer>
+
+Generation stops at </answer> via a custom StoppingCriteria. If </answer> does not appear within max_new_tokens, the iterative strategy extends generation in 256-token increments, up to two extensions by default.
+
+Prompt templates
+| File                  | Used for                                             |
+| --------------------- | ---------------------------------------------------- |
+| `tiser_full.txt`      | Main CoT prompt for training and evaluation          |
+| `tiser_full_it.txt`   | Italian prompt with native-language answer directive |
+| `tiser_full_de.txt`   | German prompt                                        |
+| `tiser_full_fr.txt`   | French prompt                                        |
+| `tiser_compact.txt`   | Compact variant with stricter length guidance        |
+| `standard.txt`        | Direct-answer baseline without CoT                   |
+| `answer_recovery.txt` | Second-pass prompt when generation lacks `</answer>` |
+
+
+Per-sample prompt selection at training and inference time ensures each sample uses the prompt in its own language. The fallback is always the base English prompt.
+
+Hardware
+
+All experiments run on a single consumer GPU.
+| Component    | Value                       |
+| ------------ | --------------------------- |
+| GPU          | 8 GB VRAM                   |
+| CPU          | AMD Ryzen, Alienware m17 R5 |
+| RAM          | 16 GB                       |
+| Python       | 3.10                        |
+| PyTorch      | 2.x                         |
+| Transformers | 4.x                         |
+
+
+Citation
+
+If you use this code or results, please cite the original TISER paper:
+
+@inproceedings{bazaga2025tiser,
+  title     = {Learning to Reason Over Time: Timeline Self-Reflection
+               for Improved Temporal Reasoning in Language Models},
+  author    = {Bazaga, Adrián and others},
+  booktitle = {Proceedings of the 63rd Annual Meeting of the Association
+               for Computational Linguistics},
+  year      = {2025},
+}
+License
+
+Released for research purposes.
+
+The TISER dataset and Qwen2.5 model weights are subject to their own licenses. Please check the original authors' repositories and model cards for details.
