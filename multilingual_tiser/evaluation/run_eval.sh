@@ -61,7 +61,7 @@ echo "Output:   $GEN_OUTPUT"
 echo "Test file: $TEST_FILE"
 echo ""
 
-python tiser_lite/evaluation/inference.py \
+python multilingual_tiser/evaluation/inference.py \
     --base_model "$BASE_MODEL" \
     --test_file "$TEST_FILE" \
     --output_file "$GEN_OUTPUT" \
