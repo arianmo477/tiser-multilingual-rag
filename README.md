@@ -152,12 +152,12 @@ tiser-multilingual/
 
 
 ### Training
-### English-only model
+ English-only model
 ```bash
 bash multilingual_tiser/training/run_train.sh qwen en tiser_full 15000
 ```
 
-### Two-language model: EN + IT
+ Two-language model: EN + IT
 ```bash
 #Build the mixed training file
 bash multilingual_tiser/preprocess/run_mix_dataset.sh train en,it 15000
@@ -184,28 +184,33 @@ bash multilingual_tiser/training/run_train.sh qwen en_it_mixed tiser_full 15000
 
 ### Evaluation
 Single language
+```bash
 bash tiser_lite/evaluation/run_eval.sh qwen en \
     experiments/qwen/en_15000_8gb_val_qlora/ \
     iterative tiser_full 500
-
+```
 Two-language model
+```bash
 bash tiser_lite/evaluation/run_eval.sh qwen en,it \
     experiments/qwen/en_it_mixed_tiser_full_15000_8gb_val_qlora/ \
     iterative tiser_full 500
-
+```
 Four-language model
+```bash 
 bash tiser_lite/evaluation/run_eval.sh qwen en,it,de,fr \
     experiments/qwen/de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora/ \
     iterative tiser_full 500
-
+```
 This produces one result JSON per language and prints per-language and per-dataset breakdowns automatically at the end of each run.
 
 Aggregating multiple result files
+```bash
 python tiser_lite/temp.py \
     experiments/qwen/*/results/gen_*.json \
     --per_language \
     --per_dataset
-Metric definitions
+```
+### Metric definitions
 | Metric      | Description                                                                 |
 | ----------- | --------------------------------------------------------------------------- |
 | **EM**      | Strict exact match after text normalization                                 |
@@ -220,26 +225,30 @@ Translation pipeline
 The multilingual datasets are generated from the English TISER data using NLLB-200-distilled-1.3B
 
 # Italian
+```bash
 python tiser_lite/translate/translate_dataset.py \
     --input  data/splits/train/TISER_train_en.json \
     --output data/splits/train/TISER_train_it.json \
     --target_lang it \
     --batch_size 2
+```
 
 # German
+```bash
 python tiser_lite/translate/translate_dataset.py \
     --input  data/splits/train/TISER_train_en.json \
     --output data/splits/train/TISER_train_de.json \
     --target_lang de \
     --batch_size 2
-
+```
 # French
+```bash
 python tiser_lite/translate/translate_dataset.py \
     --input  data/splits/train/TISER_train_en.json \
     --output data/splits/train/TISER_train_fr.json \
     --target_lang fr \
     --batch_size 2
-
+```
 Design decisions
 
 The translation pipeline has four layers to preserve quality on the structured TISER format.
@@ -270,7 +279,7 @@ It validates semantic similarity, missing years, empty parentheses, missing TISE
 TISER reasoning format
 
 The model produces a four-section structured trace:
-
+```bash
 <reasoning>
   [Step-by-step temporal reasoning in plain paragraph form]
   <timeline>
@@ -284,10 +293,11 @@ The model produces a four-section structured trace:
 <answer>
   [Final concise answer]
 </answer>
+```
 
 Generation stops at </answer> via a custom StoppingCriteria. If </answer> does not appear within max_new_tokens, the iterative strategy extends generation in 256-token increments, up to two extensions by default.
 
-Prompt templates
+### Prompt templates
 | File                  | Used for                                             |
 | --------------------- | ---------------------------------------------------- |
 | `tiser_full.txt`      | Main CoT prompt for training and evaluation          |
@@ -301,7 +311,7 @@ Prompt templates
 
 Per-sample prompt selection at training and inference time ensures each sample uses the prompt in its own language. The fallback is always the base English prompt.
 
-Hardware
+### Hardware
 
 All experiments run on a single consumer GPU.
 | Component    | Value                       |
@@ -314,10 +324,10 @@ All experiments run on a single consumer GPU.
 | Transformers | 4.x                         |
 
 
-Citation
+# Citation
 
 If you use this code or results, please cite the original TISER paper:
-
+```bash
 @inproceedings{bazaga2025tiser,
   title     = {Learning to Reason Over Time: Timeline Self-Reflection
                for Improved Temporal Reasoning in Language Models},
@@ -326,7 +336,8 @@ If you use this code or results, please cite the original TISER paper:
                for Computational Linguistics},
   year      = {2025},
 }
-License
+```
+# License
 
 Released for research purposes.
 
