@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+
 """
 Mix TISER language datasets with balanced per-dataset totals.
 

@@ -155,7 +155,7 @@ echo "Eval Steps    : $EVAL_STEPS"
 echo "Save Steps    : $EVAL_STEPS"
 echo "=============================="
 
-python multilingual_tiser/training/train_qlora.py \
+python multilingual_rag_tiser/training/train_qlora.py \
   --model_name "$MODEL_NAME" \
   --train_file "$TRAIN_FILE" \
   --output_dir "$OUT_DIR" \

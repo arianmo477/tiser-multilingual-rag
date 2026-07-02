@@ -1,4 +1,23 @@
 #!/usr/bin/env python3
+"""
+Translate TISER dataset from English to a target language via NLLB.
+
+Design (four ideas):
+  1. Decomposition — questions, temporal contexts, answers, and reasoning
+     traces are translated separately, each with format-specific handling.
+  2. Entity cache — every unique parenthesized entity is translated once
+     and reused everywhere it appears (consistent naming across samples).
+  3. Three-layer entity defense — proper-noun shortcut (no NLLB), carrier-
+     prefix stripping in clean(), and hallucination detection with source
+     fallback. Keeps short entity strings from being elaborated into
+     sentences ("Penn Central is a city in...").
+  4. Template localization — grammatical scaffolding (dates, possessives,
+     "starts/ends at") is handled with per-language templates, not NLLB.
+
+Resume-safe: existing output samples are kept, cache is repaired on load,
+and only untranslated samples are processed.
+"""
+
 import argparse
 import json
 import re
@@ -6,20 +25,16 @@ from pathlib import Path
 
 import torch
 from tqdm import tqdm
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 from transformers import logging as hf_logging
 
-from utils.io_gpu import (
-    balance_by_dataset_name,
-    load_json,
-    save_json_atomic,
-)
-from utils.translation_utils import *
+from utils.io_gpu import balance_by_dataset_name, load_json, save_json_atomic
+from utils.translation_utils import *  # noqa: F401,F403
 
 
 hf_logging.set_verbosity_error()
 
-LANG = {"it": "ita_Latn", "de": "deu_Latn", "fr": "fra_Latn", "es": "spa_Latn", "fa": "pes_Arab"}
+LANG = {"it": "ita_Latn", "de": "deu_Latn", "fr": "fra_Latn"}
 SRC = "eng_Latn"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 DTYPE = torch.float16 if DEVICE == "cuda" else torch.float32
@@ -30,6 +45,7 @@ DTYPE = torch.float16 if DEVICE == "cuda" else torch.float32
 # =============================================================================
 
 def sample_key(s):
+    """Stable identity for dedup and resume. Prefer question_id."""
     qid = str(s.get("question_id", "") or "").strip()
     if qid:
         return qid
@@ -54,9 +70,7 @@ def choose_new_samples(data, done_ids, max_samples, category):
     print(f"Remaining untranslated: {len(remaining)}")
     if max_samples > 0:
         remaining = balance_by_dataset_name(
-            data=remaining,
-            category=category,
-            max_samples=max_samples,
+            data=remaining, category=category, max_samples=max_samples,
         )
     print(f"Selected this run:      {len(remaining)}")
     return remaining
@@ -77,6 +91,7 @@ def dedupe_preserve_order(samples):
 # =============================================================================
 
 def nllb(texts, tok, mdl, lang, batch=8, max_new=256, desc="NLLB", show_progress=False):
+    """Translate a list of strings, preserving order. Empty inputs stay empty."""
     fid = tok.convert_tokens_to_ids(LANG[lang])
     out = [""] * len(texts)
     valid = [(i, t) for i, t in enumerate(texts) if t and t.strip()]
@@ -113,6 +128,7 @@ def nllb(texts, tok, mdl, lang, batch=8, max_new=256, desc="NLLB", show_progress
 # =============================================================================
 
 def all_events(data):
+    """Every unique entity string used anywhere: contexts, questions, answers."""
     evs = []
     for s in data:
         for f in ("question", "temporal_context"):
@@ -125,13 +141,14 @@ def all_events(data):
 
 
 def translate_missing(items, cache, tok, mdl, lang, batch):
-    """Translate any entities not already in the cache.
+    """
+    Translate any entities not already in the cache.
 
-    Three layers of defense:
-      1. Proper-noun shortcut (no NLLB call, identity-pass)
-      2. Carrier-prefix stripping in clean()
-      3. Hallucination detection — fall back to source string if NLLB
-         elaborated a short entity into a sentence.
+    Three-layer defense:
+      1. Proper-noun shortcut — no NLLB call, identity-pass.
+      2. Carrier-prefix stripping happens inside clean().
+      3. Hallucination detection — if NLLB elaborated a short entity into
+         a sentence, fall back to the source string.
     """
     miss, seen = [], set()
     pass_through = 0
@@ -177,11 +194,33 @@ def translate_missing(items, cache, tok, mdl, lang, batch):
     return cache
 
 
+def clean_cache(cache):
+    """
+    Self-healing repair on load.
+
+    Fixes entries from prior buggy runs:
+      - Leaked carrier prefixes ("Traduire ce texte: X")
+      - Hallucinated descriptions ("Penn Central est une ville...")
+    Returns (rescued, purged) counts for reporting.
+    """
+    rescued = purged = 0
+    for k, v in list(cache.items()):
+        cleaned = clean(v)
+        if cleaned != v:
+            cache[k] = cleaned
+            rescued += 1
+        if looks_hallucinated(cache[k], k):
+            cache[k] = k
+            purged += 1
+    return rescued, purged
+
+
 # =============================================================================
 # Context translation
 # =============================================================================
 
 def translate_context_text(text, tok, mdl, lang, batch):
+    """Non-entity connective tissue — templates first, NLLB as fallback."""
     text = (text or "").strip()
     if not text:
         return text
@@ -207,21 +246,33 @@ def translate_context_text(text, tok, mdl, lang, batch):
     return text
 
 
+def _tidy_context(text):
+    """Whitespace and punctuation cleanup after span reassembly."""
+    text = re.sub(r"\s+([.,:;])", r"\1", text)
+    text = re.sub(r"\(\s+", "(", text)
+    text = re.sub(r"\s+\)", ")", text)
+    text = re.sub(r"\.\.+", ".", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
 def translate_context(ctx, cache, tok, mdl, lang, batch):
+    """Translate context by splitting around parenthesized entity spans."""
     ctx = ctx or ""
     if not ctx.strip():
         return ""
 
     spans = parens(ctx)
 
+    # No parens — sentence-level translation
     if not spans:
         sentences = re.split(r"(?<=\.)\s+", ctx)
         text = " ".join(
             translate_context_text(s, tok, mdl, lang, batch)
             for s in sentences if s.strip()
         )
-        return re.sub(r"\s+", " ", re.sub(r"\.\.+", ".", text)).strip()
+        return _tidy_context(text)
 
+    # Weave entity substitutions into connective translations
     parts, last = [], 0
     for a, b in spans:
         before = translate_context_text(ctx[last:a], tok, mdl, lang, batch)
@@ -235,12 +286,7 @@ def translate_context(ctx, cache, tok, mdl, lang, batch):
     if tail:
         parts.append(tail)
 
-    text = " ".join(parts)
-    text = re.sub(r"\s+([.,:;])", r"\1", text)
-    text = re.sub(r"\(\s+", "(", text)
-    text = re.sub(r"\s+\)", ")", text)
-    text = re.sub(r"\.\.+", ".", text)
-    return re.sub(r"\s+", " ", text).strip()
+    return _tidy_context(" ".join(parts))
 
 
 # =============================================================================
@@ -248,17 +294,18 @@ def translate_context(ctx, cache, tok, mdl, lang, batch):
 # =============================================================================
 
 def translate_question(q, cache, tok, mdl, lang):
+    """Mask entities → translate → restore. Falls back to phrase replacement."""
     masked, evs = mask_events(q)
     tr = nllb([masked], tok, mdl, lang, batch=1, max_new=512)[0]
 
     if all(PH.format(i) in tr for i in range(len(evs))):
         return restore(tr, evs, cache)
 
+    # NLLB dropped placeholders — do string-level phrase swaps instead
     repl = LANG_RESOURCES[lang]["question_fallbacks"]
     tr = q
     for a, b in repl.items():
         tr = tr.replace(a, b)
-
     return re.sub(r"\s+", " ", restore(*mask_events(tr), cache)).strip()
 
 
@@ -270,7 +317,6 @@ def translate_answer(ans, cache, tok, mdl, lang, batch):
         return localize_boolean(ans, lang)
     if ans in cache:
         return cache[ans]
-    # Proper-noun shortcut: skip NLLB entirely for clear named entities.
     if is_proper_noun(ans):
         cache[ans] = ans
         return ans
@@ -287,6 +333,7 @@ def translate_answer(ans, cache, tok, mdl, lang, batch):
 # =============================================================================
 
 def split_tags(text):
+    """Split output into interleaved (text, tag) segments."""
     parts, last = [], 0
     text = text or ""
     for m in TAG_RE.finditer(text):
@@ -299,36 +346,48 @@ def split_tags(text):
     return parts
 
 
-def translate_output_line(line, cache, tok, mdl, lang, batch):
-    if not line.strip():
-        return line
-
+def _translate_event_line(line, cache, tok, mdl, lang, batch):
+    """Timeline line: '<prefix><event> (<year>)' — translate event only."""
     for pat in [
         r"^(\s*\d+\.\s*)(.*?)(\s*\(\d{3,4}\)\s*)$",
         r"^(\s*)(.*?)(\s*\(\d{3,4}\)\s*)$",
     ]:
         m = re.match(pat, line)
-        if m:
-            prefix, event_text, year = m.groups()
-            event_text = event_text.strip()
-            event_native = cache.get(event_text)
-            if event_native is None:
-                if is_proper_noun(event_text):
-                    event_native = event_text
-                else:
-                    event_native = nllb(
-                        [event_text], tok, mdl, lang,
-                        batch=batch, max_new=256,
-                    )[0]
-                    if looks_hallucinated(event_native, event_text):
-                        event_native = event_text
-                cache[event_text] = event_native
-            return f"{prefix}{event_native} {year.strip()}"
+        if not m:
+            continue
 
+        prefix, event_text, year = m.groups()
+        event_text = event_text.strip()
+
+        event_native = cache.get(event_text)
+        if event_native is None:
+            if is_proper_noun(event_text):
+                event_native = event_text
+            else:
+                event_native = nllb([event_text], tok, mdl, lang, batch=batch, max_new=256)[0]
+                if looks_hallucinated(event_native, event_text):
+                    event_native = event_text
+            cache[event_text] = event_native
+        return f"{prefix}{event_native} {year.strip()}"
+
+    return None
+
+
+def translate_output_line(line, cache, tok, mdl, lang, batch):
+    if not line.strip():
+        return line
+
+    # Try timeline-line shortcut first
+    timeline = _translate_event_line(line, cache, tok, mdl, lang, batch)
+    if timeline is not None:
+        return timeline
+
+    # No entity spans — translate the whole line
     spans = parens(line)
     if not spans:
         return nllb([line], tok, mdl, lang, batch=batch, max_new=768)[0]
 
+    # Protect entity spans as placeholders so NLLB can't touch them
     protected, text = [], line
     for i, (a, b) in enumerate(reversed(spans)):
         original = line[a:b]
@@ -340,24 +399,21 @@ def translate_output_line(line, cache, tok, mdl, lang, batch):
 
     for ph, original in protected:
         inside = unparen(original).strip()
-        tr = tr.replace(
-            ph,
-            f"({cache[inside]})" if inside in cache else original,
-        )
+        tr = tr.replace(ph, f"({cache[inside]})" if inside in cache else original)
 
     return tr
 
 
 def translate_output(output_en, answer_native, cache, tok, mdl, lang, batch):
+    """Translate output preserving XML tags and answer content."""
     rebuilt = []
     for kind, text in split_tags(output_en):
         if kind == "tag" or not text.strip():
             rebuilt.append(text)
             continue
 
-        lines = text.splitlines(keepends=True)
         translated_lines = []
-        for line in lines:
+        for line in text.splitlines(keepends=True):
             newline = "\n" if line.endswith("\n") else ""
             line = line[:-1] if newline else line
             translated_lines.append(
@@ -367,12 +423,14 @@ def translate_output(output_en, answer_native, cache, tok, mdl, lang, batch):
 
     text = "".join(rebuilt)
 
+    # Force <answer> content to match the translated answer exactly
     text = re.sub(
         r"(<answer>\s*)(.*?)(\s*</answer>)",
         lambda m: f"{m.group(1)}{answer_native}{m.group(3)}",
         text, flags=re.I | re.S,
     )
 
+    # Final formatting pass
     text = re.sub(r"\s+\((\d{3,4})\)", r" (\1)", text)
     text = re.sub(r"\)(?=\S)", ") ", text)
     text = re.sub(r"\n{3,}", "\n\n", text)
@@ -384,6 +442,7 @@ def translate_output(output_en, answer_native, cache, tok, mdl, lang, batch):
 # =============================================================================
 
 def translate_sample(s, cache, tok, mdl, lang, batch, category):
+    """Translate one sample. Train samples also get output/output_en fields."""
     q_en = s.get("question", "")
     ctx_en = s.get("temporal_context", "")
     ans_en = str(s.get("answer", "") or "")
@@ -393,38 +452,44 @@ def translate_sample(s, cache, tok, mdl, lang, batch, category):
     ans_native = translate_answer(ans_en, cache, tok, mdl, lang, batch)
 
     t = dict(s)
+    t.update({
+        "question_en": q_en,
+        "temporal_context_en": ctx_en,
+        "answer_en": ans_en,
+        "language": lang,
+        "question": translate_question(q_en, cache, tok, mdl, lang),
+        "temporal_context": ctx_native,
+        "answer": ans_native,
+    })
+
     if category == "train":
-        t.update({
-            "question_en": q_en,
-            "temporal_context_en": ctx_en,
-            "answer_en": ans_en,
-            "output_en": output_en,
-            "language": lang,
-            "question": translate_question(q_en, cache, tok, mdl, lang),
-            "temporal_context": ctx_native,
-            "answer": ans_native,
-            "output": translate_output(
-                output_en, ans_native, cache, tok, mdl, lang, batch,
-            ),
-        })
-    else:
-        t.update({
-            "question_en": q_en,
-            "temporal_context_en": ctx_en,
-            "answer_en": ans_en,
-            "language": lang,
-            "question": translate_question(q_en, cache, tok, mdl, lang),
-            "temporal_context": ctx_native,
-            "answer": ans_native,
-        })
+        t["output_en"] = output_en
+        t["output"] = translate_output(
+            output_en, ans_native, cache, tok, mdl, lang, batch,
+        )
+
     return t
+
+
+# =============================================================================
+# Model loading
+# =============================================================================
+
+def load_model(model_name):
+    tok = AutoTokenizer.from_pretrained(model_name, src_lang=SRC)
+    mdl = AutoModelForSeq2SeqLM.from_pretrained(
+        model_name, torch_dtype=DTYPE,
+    ).to(DEVICE)
+    mdl.generation_config.max_length = None
+    mdl.eval()
+    return tok, mdl
 
 
 # =============================================================================
 # Main
 # =============================================================================
 
-def main():
+def parse_args():
     ap = argparse.ArgumentParser()
     ap.add_argument("--input", required=True)
     ap.add_argument("--output", required=True)
@@ -434,17 +499,13 @@ def main():
     ap.add_argument("--max_samples", type=int, default=0)
     ap.add_argument(
         "--cache", default=None,
-        help="Path to event-translation cache. "
-             "Defaults to data/splits/<category>/event_translation_cache_<lang>.json",
+        help="Event-translation cache path. "
+             "Default: data/splits/<category>/event_translation_cache_<lang>.json",
     )
-    ap.add_argument(
-        "--fresh", action="store_true",
-        help="Ignore existing output and start from zero.",
-    )
-    ap.add_argument(
-        "--category", default="train",
-        help="Dataset category for balanced sampling.",
-    )
+    ap.add_argument("--fresh", action="store_true",
+                    help="Ignore existing output and start from zero.")
+    ap.add_argument("--category", default="train",
+                    help="Dataset category for balanced sampling.")
     args = ap.parse_args()
 
     if args.target_lang not in LANG_RESOURCES:
@@ -458,10 +519,15 @@ def main():
             f"data/splits/{args.category}/"
             f"event_translation_cache_{args.target_lang}.json"
         )
+    return args
 
+
+def main():
+    args = parse_args()
     data = load_json(args.input)
     category = args.category or "train"
 
+    # ---- Resume state ----
     if args.fresh:
         existing, done_ids = [], set()
         print("Fresh mode: ignoring existing output file.")
@@ -469,40 +535,23 @@ def main():
         existing, done_ids = load_existing_translations(args.output)
 
     data_to_translate = choose_new_samples(data, done_ids, args.max_samples, category)
-
     if not data_to_translate:
         print("Nothing new to translate.")
         return
 
+    # ---- Model ----
     print(f"Device:      {DEVICE}")
     print(f"Model:       {args.model_name}")
     print(f"Target lang: {args.target_lang}")
     print(f"Cache:       {args.cache}")
+    tok, mdl = load_model(args.model_name)
 
-    tok = AutoTokenizer.from_pretrained(args.model_name, src_lang=SRC)
-    mdl = AutoModelForSeq2SeqLM.from_pretrained(
-        args.model_name, torch_dtype=DTYPE,
-    ).to(DEVICE)
-    mdl.generation_config.max_length = None
-    mdl.eval()
-
+    # ---- Cache: load, self-heal, extend ----
     cache_path = Path(args.cache)
     cache = load_json(cache_path) if cache_path.exists() else {}
     old_cache_size = len(cache)
 
-    # Self-healing cache cleanup. Repairs any entries from prior buggy runs:
-    #   - leaked carrier prefixes ("Traduire ce texte: X")
-    #   - hallucinated descriptions ("Penn Central est une ville...")
-    rescued = 0
-    purged = 0
-    for k, v in list(cache.items()):
-        cleaned = clean(v)
-        if cleaned != v:
-            cache[k] = cleaned
-            rescued += 1
-        if looks_hallucinated(cache[k], k):
-            cache[k] = k
-            purged += 1
+    rescued, purged = clean_cache(cache)
     if rescued:
         print(f"Cache cleanup: rescued {rescued} entries with leftover prefixes.")
     if purged:
@@ -513,10 +562,10 @@ def main():
         args.target_lang, args.batch_size,
     )
     save_json_atomic(cache, args.cache)
-
     print(f"Cache size: {old_cache_size} -> {len(cache)}")
-    print("Starting sample translation...")
 
+    # ---- Translate samples ----
+    print("Starting sample translation...")
     new_translated = []
     bar = tqdm(
         data_to_translate,
@@ -537,10 +586,9 @@ def main():
             )
         )
 
+    # ---- Persist ----
     final = dedupe_preserve_order(existing + new_translated)
     save_json_atomic(final, args.output)
-
-    # Persist any cache updates that happened during sample translation
     save_json_atomic(cache, args.cache)
 
     print("=" * 80)
