@@ -119,14 +119,18 @@ def balance_by_dataset_name(data, category, max_samples, seed=42):
     leftovers = []
 
     for name in names:
-        if len(buckets[name]) <= base:
-            selected.extend(buckets[name])
-            leftovers += buckets[name][:]
+        bucket = buckets[name]
+        if len(bucket) <= base:
+            # Whole bucket is used; nothing is left over for the top-up pool.
+            selected.extend(bucket)
         else:
-            sel = random.sample(buckets[name], base)
-            selected.extend(sel)
-            leftovers += [x for x in buckets[name] if x not in sel]
+            # Sample by index so the chosen items are excluded from leftovers
+            # exactly once (avoids re-adding a selected sample -> duplicates).
+            chosen = set(random.sample(range(len(bucket)), base))
+            selected.extend(bucket[i] for i in chosen)
+            leftovers.extend(bucket[i] for i in range(len(bucket)) if i not in chosen)
 
+    # Top up toward max_samples from items NOT already selected (no overlap).
     remaining = max_samples - len(selected)
     if remaining > 0 and leftovers:
         selected.extend(random.sample(leftovers, min(remaining, len(leftovers))))

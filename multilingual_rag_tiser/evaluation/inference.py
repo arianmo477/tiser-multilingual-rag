@@ -154,7 +154,13 @@ def parse_args():
     p.add_argument("--test_file", required=True)
     p.add_argument("--output_file", required=True)
     p.add_argument("--max_eval_samples", type=int, default=None)
-    p.add_argument("--only_passed", action="store_true", default=True)
+    p.add_argument(
+        "--only_passed",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Keep only validation_status==PASS samples. "
+             "Use --no-only_passed to evaluate on the full set.",
+    )
 
     # Generation
     p.add_argument("--strategy", choices=["base", "iterative"], default="iterative")
@@ -245,7 +251,7 @@ def load_data(args):
     data = [dict(x) for x in ds]
 
     lang_counts = Counter(s.get("language") for s in data)
-    if any(lang_counts):
+    if lang_counts:
         print(f"\nLanguage distribution: {dict(lang_counts)}")
     print(f"Strategy: '{args.strategy}' | Samples: {len(data)}")
     return data

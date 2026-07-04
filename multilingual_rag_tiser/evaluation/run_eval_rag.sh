@@ -65,6 +65,11 @@ if [[ -z "${RAG_TRAIN_FILE:-}" ]]; then
         RAG_TRAIN_FILE=$(find_first \
             "data/splits/train/it/TISER_train_it_passed.json" \
             "data/splits/train/TISER_train_it.json") || true
+    elif [[ "$LANG" == "en" ]]; then
+        # Frozen 15k snapshot so the full 174MB TISER_train_en.json can be pruned (docs/DATA.md §3).
+        RAG_TRAIN_FILE=$(find_first \
+            "data/splits/train/train_tiser_15000_en.json" \
+            "data/splits/train/TISER_train_en.json") || true
     else
         RAG_TRAIN_FILE="data/splits/train/TISER_train_${LANG}.json"
     fi

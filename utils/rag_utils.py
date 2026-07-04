@@ -74,6 +74,7 @@ class RAGRetriever:
         top_k: int = 1,
         min_score: float = 0.55,
         exclude_question_id: Optional[str] = None,
+        language: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
         Retrieve top-k training examples similar to `query`.
@@ -87,6 +88,11 @@ class RAGRetriever:
             exclude_question_id: Skip documents with this id (prevents
                                  test-set leakage when evaluating on
                                  training-domain samples).
+            language:            If set, only return documents whose
+                                 language matches (documents with no
+                                 language tag are always allowed). Keeps a
+                                 mixed-language index from returning a
+                                 cross-lingual exemplar.
 
         Returns:
             List of dicts with keys: question, temporal_context, answer,
@@ -114,6 +120,10 @@ class RAGRetriever:
                 continue
             doc = self.documents[idx]
             if exclude_question_id and doc.get("question_id") == exclude_question_id:
+                continue
+            # Language filter: skip cross-lingual hits on a mixed index.
+            # Documents with no language tag are always allowed.
+            if language and doc.get("language") and doc.get("language") != language:
                 continue
             # Skip documents with corrupt output (broken translations)
             output = doc.get("output", "") or ""
@@ -346,6 +356,8 @@ class RAGContextBuilder:
             top_k=top_k if top_k is not None else self.top_k,
             min_score=min_score if min_score is not None else self.min_score,
             exclude_question_id=qid,
+            # "mixed" is a corpus tag, not a real language → don't filter.
+            language=None if lang == "mixed" else lang,
         )
 
         if not retrieved:

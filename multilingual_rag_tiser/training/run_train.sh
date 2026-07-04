@@ -36,7 +36,14 @@ fi
 TRAIN_FILE=""
 
 if [[ "$LANG" == "en" ]]; then
-  TRAIN_FILE="data/splits/train/TISER_train_en.json"
+  # Frozen 15k snapshot = the exact data behind the reported EN numbers (docs/DATA.md §3).
+  # Passing MAX_SAMPLES=15000 on a pre-balanced 15k file is content-preserving (returns the
+  # same set, just reshuffled by seed=42). Fall back to the full split only if it is missing.
+  if [[ -f "data/splits/train/train_tiser_15000_en.json" ]]; then
+    TRAIN_FILE="data/splits/train/train_tiser_15000_en.json"
+  else
+    TRAIN_FILE="data/splits/train/TISER_train_en.json"
+  fi
 
 elif [[ "$LANG" == "it" ]]; then
   # Use passed file if it exists, otherwise fallback to raw translated file
