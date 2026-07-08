@@ -13,7 +13,7 @@ MAX_SAMPLES="${6:-500}"
 if [[ -z "$MODEL_TYPE" || -z "$LANG" ]]; then
     cat <<EOF
 Usage:
-  bash run_eval_rag.sh <qwen|mistral> <en|it|de|fr|fa|mixed> \\
+  bash run_eval_rag.sh <qwen|mistral> <en|it|de|fr|mixed> \\
     [adapter|none] [base|iterative] [prompt] [max_samples]
 
 Env overrides:

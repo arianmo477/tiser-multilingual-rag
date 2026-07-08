@@ -17,3 +17,5 @@ __pycache__/
 
 # --- OS / editor ---
 .DS_Store
+docs/report.tex
+docs/experiment1_results.md

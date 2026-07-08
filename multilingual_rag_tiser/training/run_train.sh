@@ -5,7 +5,7 @@ export PYTHONPATH="$(pwd):${PYTHONPATH:-}"
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 MODEL="${1:-}"              # qwen
-LANG="${2:-}"               # en, it, de, fa, en_it_de_mixed_15000, mixed
+LANG="${2:-}"               # en, it, de, en_it_de_mixed_15000, mixed
 PROMPT_NAME="${3:-tiser_full}"
 MAX_SAMPLES="${4:-2000}"        # optional
 
@@ -58,13 +58,6 @@ elif [[ "$LANG" == "de" ]]; then
     TRAIN_FILE="data/splits/train/de/TISER_train_de_passed.json"
   else
     TRAIN_FILE="data/splits/train/TISER_train_de.json"
-  fi
-
-elif [[ "$LANG" == "fa" ]]; then
-  if [[ -f "data/splits/train/fa/TISER_train_fa_passed.json" ]]; then
-    TRAIN_FILE="data/splits/train/fa/TISER_train_fa_passed.json"
-  else
-    TRAIN_FILE="data/splits/train/TISER_train_fa.json"
   fi
 
 elif [[ "$LANG" == "mixed" ]]; then

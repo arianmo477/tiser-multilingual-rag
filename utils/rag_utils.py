@@ -72,7 +72,7 @@ class RAGRetriever:
         self,
         query: str,
         top_k: int = 1,
-        min_score: float = 0.55,
+        min_score: float = 0.60,
         exclude_question_id: Optional[str] = None,
         language: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
@@ -311,7 +311,7 @@ class RAGContextBuilder:
         index_dir: str,
         model_name: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
         top_k: int = 1,
-        min_score: float = 0.55,
+        min_score: float = 0.60,
         mode: str = "few_shot",
     ):
         if mode not in self.VALID_MODES:

@@ -9,31 +9,23 @@ dependencies:
 
   # Utilities
   - numpy=1.26.*
-  - pandas=2.1.*
-  - scikit-learn=1.3.*
   - tqdm
   - protobuf>=3.20,<5
-  - sentencepiece
-  - sacremoses
-  - faiss-cpu
+  - sentencepiece        # NLLB / Qwen tokenizers
+  - sacremoses           # NLLB tokenizer
+  - faiss-cpu            # RAG retrieval index
 
   - pip:
-      # PyTorch stack
+      # PyTorch
       - torch>=2.6
-      - torchvision
-      - torchaudio
 
       # HF stack
       - transformers>=4.39.0
       - datasets>=2.16.1
-      - accelerate>=0.27.0
+      - accelerate>=0.27.0   # required at runtime for device_map="auto" / 4-bit
       - peft>=0.10.0
-      - trl>=0.8.0
-      - wandb>=0.16.0
-      - bitsandbytes
+      - bitsandbytes         # 4-bit QLoRA (CUDA only)
       - tokenizers>=0.15.0
-      - regex
 
-      # Other
+      # RAG retrieval
       - sentence-transformers>=2.5.0
-      - langdetect

@@ -117,32 +117,44 @@ French scores slightly lower than the other languages due to translation quality
 ## Installation
 
 ```bash
-git clone https://github.com/<your-username>/tiser-multilingual.git
-cd tiser-multilingual
+git clone https://github.com/arianmo477/MultilingualTemporalReasoningTISER.git
+cd MultilingualTemporalReasoningTISER
 
-conda create -n tiser python=3.10
+# Recommended: create the environment from environment.yml
+conda env create -f environment.yml
 conda activate tiser
-
-pip install torch --index-url https://download.pytorch.org/whl/cu118
-pip install transformers peft bitsandbytes datasets tqdm
-pip install "transformers[sentencepiece]" sentence-transformers sacremoses
 
 export PYTHONPATH="$(pwd):${PYTHONPATH:-}"
 ```
+
+Or install manually with pip (note `faiss-cpu` is required for the RAG extension
+and `accelerate` for 4-bit loading):
+
+```bash
+conda create -n tiser python=3.10 && conda activate tiser
+pip install torch --index-url https://download.pytorch.org/whl/cu118
+pip install transformers datasets accelerate peft bitsandbytes tokenizers
+pip install sentence-transformers sentencepiece sacremoses faiss-cpu tqdm
+export PYTHONPATH="$(pwd):${PYTHONPATH:-}"
+```
+
+Datasets are stored with **git-LFS** (`git lfs install && git lfs pull`); see
+[`docs/DATA.md`](docs/DATA.md) for which files are required and how to rebuild
+derived artifacts such as the RAG index.
 
 
 ### Project structure
 ```bash
 tiser-multilingual/
 │
-├── tiser_lite/
+├── multilingual_rag_tiser/
 │   ├── training/
 │   │   ├── train_qlora.py          # QLoRA fine-tuning
 │   │   └── run_train.sh            # Training launcher
 │   │
 │   ├── evaluation/
 │   │   ├── inference.py            # Inference + metric computation
-│   │   └── run_eval.sh             # Multi-language eval launcher
+│   │   └── run_eval_rag.sh             # Multi-language eval launcher
 │   │
 │   ├── translate/
 │   │   └── translate_dataset.py    # NLLB translation pipeline
@@ -174,15 +186,15 @@ tiser-multilingual/
 ### Training
  English-only model
 ```bash
-bash multilingual_tiser/training/run_train.sh qwen en tiser_full 15000
+bash multilingual_rag_tiser/training/run_train.sh qwen en tiser_full 15000
 ```
 
  Two-language model: EN + IT
 ```bash
 #Build the mixed training file
-bash multilingual_tiser/preprocess/run_mix_dataset.sh train en,it 15000
+bash multilingual_rag_tiser/preprocess/run_mix_dataset.sh train en,it 15000
 # Fine-tune
-bash multilingual_tiser/training/run_train.sh qwen en_it_mixed tiser_full 15000
+bash multilingual_rag_tiser/training/run_train.sh qwen en_it_mixed tiser_full 15000
 ```
 # Key training hyperparameters
 
@@ -205,29 +217,36 @@ bash multilingual_tiser/training/run_train.sh qwen en_it_mixed tiser_full 15000
 ### Evaluation
 Single language
 ```bash
-bash tiser_lite/evaluation/run_eval.sh qwen en \
+bash multilingual_rag_tiser/evaluation/run_eval_rag.sh qwen en \
     experiments/qwen/en_15000_8gb_val_qlora/ \
     iterative tiser_full 500
 ```
-Two-language model
+Two-language model — the script takes a single language, so evaluate the same
+adapter once per language:
 ```bash
-bash tiser_lite/evaluation/run_eval.sh qwen en,it \
-    experiments/qwen/en_it_mixed_tiser_full_15000_8gb_val_qlora/ \
-    iterative tiser_full 500
+for L in en it; do
+  bash multilingual_rag_tiser/evaluation/run_eval_rag.sh qwen "$L" \
+      experiments/qwen/en_it_mixed_tiser_full_15000_8gb_val_qlora/ \
+      iterative tiser_full 500
+done
 ```
 Four-language model
-```bash 
-bash tiser_lite/evaluation/run_eval.sh qwen en,it,de,fr \
-    experiments/qwen/de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora/ \
-    iterative tiser_full 500
-```
-This produces one result JSON per language and prints per-language and per-dataset breakdowns automatically at the end of each run.
-
-Aggregating multiple result files
 ```bash
-python tiser_lite/temp.py \
-    experiments/qwen/*/results/gen_*.json \
-    --per_language \
+for L in en it de fr; do
+  bash multilingual_rag_tiser/evaluation/run_eval_rag.sh qwen "$L" \
+      experiments/qwen/de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora/ \
+      iterative tiser_full 500
+done
+```
+Each invocation evaluates one language, writes one result JSON, and prints per-language and
+per-dataset breakdowns automatically at the end of the run. To aggregate the RAG ablation
+cells into one comparison:
+```bash
+python multilingual_rag_tiser/evaluation/compare_rag_ablation.py \
+    base_norag=path/to/gen_base_norag.json \
+    base_rag=path/to/gen_base_rag.json \
+    ft_norag=path/to/gen_ft_norag.json \
+    ft_rag=path/to/gen_ft_rag.json \
     --per_dataset
 ```
 ### Metric definitions
@@ -246,7 +265,7 @@ The multilingual datasets are generated from the English TISER data using NLLB-2
 
 # Italian
 ```bash
-python tiser_lite/translate/translate_dataset.py \
+python multilingual_rag_tiser/translate/translate_dataset.py \
     --input  data/splits/train/TISER_train_en.json \
     --output data/splits/train/TISER_train_it.json \
     --target_lang it \
@@ -255,7 +274,7 @@ python tiser_lite/translate/translate_dataset.py \
 
 # German
 ```bash
-python tiser_lite/translate/translate_dataset.py \
+python multilingual_rag_tiser/translate/translate_dataset.py \
     --input  data/splits/train/TISER_train_en.json \
     --output data/splits/train/TISER_train_de.json \
     --target_lang de \
@@ -263,7 +282,7 @@ python tiser_lite/translate/translate_dataset.py \
 ```
 # French
 ```bash
-python tiser_lite/translate/translate_dataset.py \
+python multilingual_rag_tiser/translate/translate_dataset.py \
     --input  data/splits/train/TISER_train_en.json \
     --output data/splits/train/TISER_train_fr.json \
     --target_lang fr \
@@ -285,7 +304,7 @@ Translation quality scoring
 
 Translated samples can be checked before training:
 
-bash tiser_lite/translate/run_score.sh train
+bash multilingual_rag_tiser/translate/run_score.sh train
 
 The scorer checks the translated fields:
 

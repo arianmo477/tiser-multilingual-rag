@@ -14,7 +14,6 @@ import gc
 import json
 import os
 from collections import Counter, defaultdict
-from functools import lru_cache
 from pathlib import Path
 
 import torch
@@ -29,24 +28,10 @@ from transformers import (
     StoppingCriteriaList,
 )
 
-from utils.io_gpu import balance_by_dataset_name, load_txt_as_string
+from utils.io_gpu import balance_by_dataset_name, load_prompt_for_lang
 from utils.metrics import calculate_metrics, clean_output, extract_answer
 from utils.prompt import build_prompt
 from utils.rag_utils import RAGContextBuilder
-
-
-# =============================================================================
-# Prompt loading
-# =============================================================================
-
-@lru_cache(maxsize=16)
-def load_prompt_for_lang(prompt_name: str, lang: str) -> str:
-    specific = Path(f"data/prompts/{prompt_name}_{lang}.txt")
-    fallback = Path(f"data/prompts/{prompt_name}.txt")
-    path = specific if specific.exists() else fallback
-    if not path.exists():
-        raise FileNotFoundError(f"Prompt not found: {specific} or {fallback}")
-    return load_txt_as_string(str(path)).strip()
 
 
 # =============================================================================
@@ -175,7 +160,7 @@ def parse_args():
     p.add_argument("--rag_mode", choices=["few_shot", "context_stuffing"], default="few_shot")
     p.add_argument("--rag_index_dir", type=str, default=None)
     p.add_argument("--rag_top_k", type=int, default=1)
-    p.add_argument("--rag_min_score", type=float, default=0.55)
+    p.add_argument("--rag_min_score", type=float, default=0.60)
     p.add_argument("--rag_model_name", type=str,
                    default="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 

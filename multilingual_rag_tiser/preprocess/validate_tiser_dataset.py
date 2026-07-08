@@ -19,7 +19,7 @@ import sys
 from collections import  defaultdict
 from pathlib import Path
 
-from utils.io_gpu import _language_counts
+from utils.io_gpu import language_counts
 
 # Make project-root imports stable when run directly
 CURRENT_FILE = Path(__file__).resolve()
@@ -27,15 +27,50 @@ PROJECT_ROOT = CURRENT_FILE.parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from utils.utils import (
-    UNKNOWN_TRIGGERS,
+from utils.io_gpu import (
     load_json,
     load_txt_as_string,
     save_json,
     save_stats,
-    repair_text_fields,
     file_sha256,
 )
+
+# ---------------------------------------------------------------------------
+# Recovered locally. These were previously imported from utils.utils (a star-
+# import aggregator that has been removed). `UNKNOWN_TRIGGERS` is ported from
+# the definition on the `improvements` branch. `repair_text_fields` /
+# `repair_mangled_unicode` are recovered from the committed Python 3.10 bytecode
+# (utils/__pycache__/text_processing.cpython-310.pyc) — the .py source was never
+# committed on this branch. Behaviour matches the original: a defensive unicode
+# fix that only touches strings containing mangled '\\uXXXX' escapes.
+# ---------------------------------------------------------------------------
+UNKNOWN_TRIGGERS = [
+    "unknown", "not specified", "not mentioned",
+    "sconosciuto", "non specificato",
+    "unbekannt", "nicht angegeben",
+    "inconnu", "non spécifié",
+]
+
+_U_ESCAPE_RE = re.compile(r"u([0-9a-fA-F]{4})")
+
+
+def repair_mangled_unicode(text):
+    """Fix mangled unicode escapes left by the translation pipeline
+    (e.g. literal 'u00e9' -> 'é'). No-op on text without such sequences."""
+    if not isinstance(text, str) or not _U_ESCAPE_RE.search(text):
+        return text
+    try:
+        return _U_ESCAPE_RE.sub(r"\\u\1", text).encode("utf-8").decode("unicode_escape")
+    except Exception:
+        return text
+
+
+def repair_text_fields(sample):
+    """Apply unicode repair to every string field (future-proof)."""
+    return {
+        k: (repair_mangled_unicode(v) if isinstance(v, str) else v)
+        for k, v in sample.items()
+    }
 
 logging.basicConfig(
     level=logging.INFO,
@@ -363,7 +398,7 @@ def main() -> None:
         "final_samples": len(data),
         "structural_warnings": len(invalid_samples),
         "prompt_templates_found": len(prompts),
-        "language_distribution": _language_counts(data),
+        "language_distribution": language_counts(data),
         "error_breakdown": dict(error_stats),
         "output_sha256": file_sha256(output_path) if (not args.dry_run and output_path.exists()) else None,
     }
