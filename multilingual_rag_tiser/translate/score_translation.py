@@ -25,7 +25,7 @@ from utils.translation_quality import (
     exact_score,
     fields_for_sample,
     is_number_or_bool,
-    normalize_text,
+    strip_tags_ws,
     structure_errors,
 )
 
@@ -39,8 +39,8 @@ def cosine_scores(model, src_texts, tgt_texts, batch_size):
     if not src_texts:
         return []
 
-    src_clean = [normalize_text(x) for x in src_texts]
-    tgt_clean = [normalize_text(x) for x in tgt_texts]
+    src_clean = [strip_tags_ws(x) for x in src_texts]
+    tgt_clean = [strip_tags_ws(x) for x in tgt_texts]
 
     print("Encoding English fields...")
     src_emb = model.encode(

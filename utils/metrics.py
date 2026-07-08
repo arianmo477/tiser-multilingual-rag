@@ -25,6 +25,8 @@ extract_answer() handles multiple output formats:
 import re
 from collections import Counter
 
+from utils.months import ALL_MONTHS
+
 
 # =============================================================================
 # Compiled regexes
@@ -80,13 +82,10 @@ EMPTY_REASONING_RE = re.compile(
 )
 
 DATE_REGEX = re.compile(
-    r"\b("
+    r"\b(?:"
     r"\d{4}|"
     r"\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|"
-    r"gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre|"
-    r"january|february|march|april|may|june|july|august|september|october|november|december|"
-    r"januar|februar|märz|maerz|mai|juni|juli|oktober|dezember|"
-    r"janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout|septembre|octobre|novembre|décembre|decembre"
+    + "|".join(re.escape(m) for m in ALL_MONTHS) +
     r")\b",
     re.IGNORECASE,
 )

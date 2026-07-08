@@ -384,16 +384,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--only_passed", action="store_true")
     parser.add_argument("--prompt_name", type=str, default="tiser_full")
 
-    # Hyperparameters
+    # Hyperparameters (defaults match the documented 8GB-QLoRA config in run_train.sh)
     parser.add_argument("--epochs", type=int, default=2)
-    parser.add_argument("--lr", type=float, default=1e-4)
-    parser.add_argument("--max_length", type=int, default=512)
+    parser.add_argument("--lr", type=float, default=3e-4)
+    parser.add_argument("--max_length", type=int, default=1536)
     parser.add_argument("--per_device_batch_size", type=int, default=1)
     parser.add_argument("--grad_accum", type=int, default=16)
 
     # LoRA
-    parser.add_argument("--lora_r", type=int, default=2)
-    parser.add_argument("--lora_alpha", type=int, default=4)
+    parser.add_argument("--lora_r", type=int, default=16)
+    parser.add_argument("--lora_alpha", type=int, default=32)
     parser.add_argument("--lora_dropout", type=float, default=0.05)
 
     # Optimization
@@ -408,7 +408,7 @@ def parse_args() -> argparse.Namespace:
 
     # Memory / Offload
     parser.add_argument("--gpu_memory_gb", type=int, default=7)
-    parser.add_argument("--cpu_memory_gb", type=int, default=28)
+    parser.add_argument("--cpu_memory_gb", type=int, default=16)
 
     return parser.parse_args()
 

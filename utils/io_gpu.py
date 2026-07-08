@@ -3,8 +3,7 @@ import hashlib
 import json
 import logging
 import os
-import random
-from collections import Counter, defaultdict
+from collections import Counter
 from pathlib import Path
 
 from functools import lru_cache
@@ -105,34 +104,9 @@ def load_txt_as_string(path: str, fallback: str = "") -> str:
 
 
 
-def balance_by_dataset_name(data, category, max_samples, seed=42):
-    random.seed(seed)
-    buckets = defaultdict(list)
-    for x in data:
-        if category == "test" and x["dataset_name"] == "tot_semantic_test":
-            continue
-        buckets[x["dataset_name"]].append(x)
-
-    names = list(buckets.keys())
-    base = max_samples // len(names)
-    selected = []
-    leftovers = []
-
-    for name in names:
-        if len(buckets[name]) <= base:
-            selected.extend(buckets[name])
-            leftovers += buckets[name][:]
-        else:
-            sel = random.sample(buckets[name], base)
-            selected.extend(sel)
-            leftovers += [x for x in buckets[name] if x not in sel]
-
-    remaining = max_samples - len(selected)
-    if remaining > 0 and leftovers:
-        selected.extend(random.sample(leftovers, min(remaining, len(leftovers))))
-
-    random.shuffle(selected)
-    return selected
+# Moved to utils/sampling.py; re-exported here for backward-compatible imports
+# (`from utils.io_gpu import balance_by_dataset_name`).
+from utils.sampling import balance_by_dataset_name  # noqa: E402,F401
 
 
 

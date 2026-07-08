@@ -1,35 +1,15 @@
 import re
 
+from utils.months import ALL_MONTHS
+
 
 BASE_FIELDS = ["question", "temporal_context", "answer"]
 OPTIONAL_FIELDS = ["output"]
 TAG_NAMES = ["reasoning", "timeline", "reflection", "answer"]
 
 
-MONTH_NAMES = [
-    # English
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-
-    # Italian
-    "gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno",
-    "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre",
-
-    # German
-    "Januar", "Februar", "März", "April", "Mai", "Juni",
-    "Juli", "August", "September", "Oktober", "November", "Dezember",
-
-    # French
-    "janvier", "février", "mars", "avril", "mai", "juin",
-    "juillet", "août", "septembre", "octobre", "novembre", "décembre",
-
-    
-]
-
-
 MONTH_RE = re.compile(
-    r"\b(?:" + "|".join(re.escape(m) for m in MONTH_NAMES) + r")\s*,?\s*\d{4}\b",
+    r"\b(?:" + "|".join(re.escape(m) for m in ALL_MONTHS) + r")\s*,?\s*\d{4}\b",
     flags=re.IGNORECASE,
 )
 
@@ -43,7 +23,10 @@ def fields_for_sample(sample):
     return fields
 
 
-def normalize_text(text):
+def strip_tags_ws(text):
+    """Strip TISER tags and collapse whitespace (no lowercasing). Used to clean
+    fields before semantic-similarity scoring. Distinct from
+    metrics.normalize_text, which lowercases and maps punctuation to spaces."""
     text = str(text or "")
     text = re.sub(r"<[^>]+>", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
