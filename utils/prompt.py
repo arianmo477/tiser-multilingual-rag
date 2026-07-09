@@ -6,30 +6,24 @@ Prompt construction shared by training and inference.
 
 def build_prompt(ex: dict, prompt: str) -> str:
     """
-    Build the prompt for training or inference.
+    Build the model input for training or inference:
 
-    Both share the same base format:
-        {instr}\n\nContext:\n{ctx}\n\nQuestion:\n{qst}\n\n
+        {prompt}\n\nContext:\n{ctx}\n\nQuestion:\n{qst}\n\n
 
-   
     Args:
-        ex:            dataset example with keys:
-                         prompt, temporal_context (or context), question
-        for_inference: True for eval/inference, False for training
+        ex:     dataset example with keys `question` and either
+                `temporal_context` or `context`.
+        prompt: instruction template text (see utils.io_gpu.load_prompt_for_lang).
 
     Returns:
-        Prompt string, ending with "<reasoning>" iff for_inference=True.
+        The formatted prompt string.
     """
-    
     instr = prompt.strip()
-    ctx   = (ex.get("temporal_context", "") or ex.get("context", "") or "").strip()
-    qst   = (ex.get("question", "") or "").strip()
+    ctx = (ex.get("temporal_context", "") or ex.get("context", "") or "").strip()
+    qst = (ex.get("question", "") or "").strip()
 
-    base = (
+    return (
         f"{instr}\n\n"
         f"Context:\n{ctx}\n\n"
         f"Question:\n{qst}\n\n"
     )
-
-    
-    return base

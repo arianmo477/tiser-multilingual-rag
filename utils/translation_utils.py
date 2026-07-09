@@ -23,9 +23,6 @@ TRANSLATE_PREFIX_RE = re.compile(
     r"|Traduis ce texte"               # French (informal)
     r"|Traduire ce texte"
     r"|Traduction de ce texte"
-    r"|Traducir este texto"            # Spanish
-    r"|Traducción de este texto"
-
     r")\s*[:\-—\uFF1A]?\s*",
     flags=re.IGNORECASE,
 )
@@ -37,8 +34,8 @@ TRANSLATE_PREFIX_RE = re.compile(
 # "Čedomir Janevski est né à Čedomir Janevski."). We catch and reject those.
 # =============================================================================
 _HALLUCINATION_PATTERNS = [
-    re.compile(r"\b(est|ist|sono|es|è)\s+(une?|un|una|uno|eine?|einer|einem|a|an)\b\s+\w+", re.I),
-    re.compile(r"\b(situé|située|located|gelegen|situato|situata|ubicado|ubicada)\b", re.I),
+    re.compile(r"\b(est|ist|sono|è)\s+(une?|un|una|uno|eine?|einer|einem|a|an)\b\s+\w+", re.I),
+    re.compile(r"\b(situé|située|located|gelegen|situato|situata)\b", re.I),
     re.compile(r"\b(né|née)\s+[aà]\b", re.I),
     re.compile(r"\bgeboren\s+in\b", re.I),
     re.compile(r"\bnato\s+(a|in)\b", re.I),
@@ -265,9 +262,6 @@ LANG_RESOURCES = {
             "Which event is the fifth one in chronological order?":  "Quel est le cinquième événement dans l'ordre chronologique ?",
         },
     },
-
-    
-    
 }
 
 

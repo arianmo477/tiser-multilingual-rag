@@ -27,7 +27,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import faiss
-import numpy as np
 from sentence_transformers import SentenceTransformer
 
 
@@ -156,8 +155,7 @@ _FEW_SHOT_HEADERS = {
     "fr": (
         "Voici un exemple similaire déjà résolu pour référence.",
         "Résous maintenant cette nouvelle question :",
-    )
-    
+    ),
 }
 
 _STUFFING_HEADERS = {
@@ -165,7 +163,6 @@ _STUFFING_HEADERS = {
     "it": "Contesto temporale aggiuntivo (potrebbe non essere rilevante):",
     "de": "Zusätzlicher zeitlicher Kontext (möglicherweise nicht relevant):",
     "fr": "Contexte temporel supplémentaire (peut ne pas être pertinent) :",
-    
 }
 
 

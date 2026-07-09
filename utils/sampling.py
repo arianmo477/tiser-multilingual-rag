@@ -12,28 +12,27 @@ import random
 from collections import defaultdict
 
 
-def balance_by_dataset_name(data, category, max_samples, seed=42):
-    """Return up to `max_samples` items, balanced across `dataset_name`.
+def _balance_by_key(data, key_fn, max_samples, seed=42):
+    """Return up to `max_samples` items, balanced across buckets of key_fn(x).
 
-    Each dataset bucket contributes `max_samples // num_datasets` items; any
-    shortfall (from buckets smaller than that quota) is topped up from the
-    remaining, not-yet-selected items so the result never contains duplicates.
-    For `category == "test"`, the `tot_semantic_test` dataset is excluded.
+    Each bucket contributes `max_samples // num_buckets` items; any shortfall
+    (from buckets smaller than that quota) is topped up from the remaining,
+    not-yet-selected items so the result never contains duplicates.
     """
     random.seed(seed)
     buckets = defaultdict(list)
     for x in data:
-        if category == "test" and x["dataset_name"] == "tot_semantic_test":
-            continue
-        buckets[x["dataset_name"]].append(x)
+        buckets[key_fn(x)].append(x)
 
-    names = list(buckets.keys())
-    base = max_samples // len(names)
+    if not buckets:
+        return []
+
+    base = max_samples // len(buckets)
     selected = []
     leftovers = []
 
-    for name in names:
-        bucket = buckets[name]
+    for key in buckets:
+        bucket = buckets[key]
         if len(bucket) <= base:
             # Whole bucket is used; nothing is left over for the top-up pool.
             selected.extend(bucket)
@@ -51,3 +50,41 @@ def balance_by_dataset_name(data, category, max_samples, seed=42):
 
     random.shuffle(selected)
     return selected
+
+
+def balance_by_dataset_name(data, category, max_samples, seed=42):
+    """Return up to `max_samples` items, balanced across `dataset_name`.
+
+    For `category == "test"`, the `tot_semantic_test` dataset is excluded.
+    """
+    if category == "test":
+        data = [x for x in data if x["dataset_name"] != "tot_semantic_test"]
+
+    return _balance_by_key(
+        data,
+        key_fn=lambda x: x["dataset_name"],
+        max_samples=max_samples,
+        seed=seed,
+    )
+
+
+def balance_by_lang_and_dataset(data, category, max_samples, seed=42):
+    """Return up to `max_samples` items, balanced across every
+    (language, dataset_name) cell.
+
+    E.g. 4 languages x 5 datasets = 20 cells -> each cell contributes
+    `max_samples // 20` items, with the shortfall from small cells topped up
+    at random from the remaining pool (never duplicating a selected item).
+
+    Samples without a `language` field fall into the "unknown" cell.
+    For `category == "test"`, the `tot_semantic_test` dataset is excluded.
+    """
+    if category == "test":
+        data = [x for x in data if x["dataset_name"] != "tot_semantic_test"]
+
+    return _balance_by_key(
+        data,
+        key_fn=lambda x: (x.get("language", "unknown"), x["dataset_name"]),
+        max_samples=max_samples,
+        seed=seed,
+    )

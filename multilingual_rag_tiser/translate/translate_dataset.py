@@ -28,8 +28,23 @@ from tqdm import tqdm
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 from transformers import logging as hf_logging
 
-from utils.io_gpu import balance_by_dataset_name, load_json, save_json_atomic
-from utils.translation_utils import *  # noqa: F401,F403
+from utils.io_gpu import load_json, save_json_atomic
+from utils.sampling import balance_by_dataset_name
+from utils.translation_utils import (
+    BOOLS,
+    LANG_RESOURCES,
+    PH,
+    TAG_RE,
+    clean,
+    fix_months,
+    is_proper_noun,
+    localize_boolean,
+    looks_hallucinated,
+    mask_events,
+    parens,
+    restore,
+    unparen,
+)
 
 
 hf_logging.set_verbosity_error()

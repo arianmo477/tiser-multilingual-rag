@@ -4,10 +4,9 @@ import json
 import logging
 import os
 from collections import Counter
-from pathlib import Path
-
 from functools import lru_cache
 from pathlib import Path
+
 import torch
 
 log = logging.getLogger(__name__)
@@ -58,6 +57,7 @@ def load_json(path):
         # JSONL fallback
         return [json.loads(line) for line in f if line.strip()]
 
+
 def _strip_invalid_unicode(obj):
     """Recursively removes invalid unicode surrogates from strings."""
     if isinstance(obj, str):
@@ -68,6 +68,7 @@ def _strip_invalid_unicode(obj):
         return {k: _strip_invalid_unicode(v) for k, v in obj.items()}
     return obj
 
+
 def save_json(path, data):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -76,6 +77,7 @@ def save_json(path, data):
 
     with open(path, "w", encoding="utf-8") as f:
         json.dump(clean_data, f, indent=2, ensure_ascii=False)
+
 
 def save_json_atomic(obj, path):
     p = Path(path)
@@ -90,6 +92,11 @@ def save_json_atomic(obj, path):
     tmp.replace(p)
 
 
+def save_stats(stats_path, stats_dict):
+    """Alias of save_json (kept for validate_tiser_dataset.py)."""
+    save_json(stats_path, stats_dict)
+
+
 def load_txt_as_string(path: str, fallback: str = "") -> str:
     if not os.path.exists(path):
         log.warning("Prompt file not found at %s. Using fallback.", path)
@@ -101,14 +108,6 @@ def load_txt_as_string(path: str, fallback: str = "") -> str:
     except Exception as e:
         log.error("Error reading prompt file: %s. Using fallback.", e)
         return fallback
-
-
-
-# Moved to utils/sampling.py; re-exported here for backward-compatible imports
-# (`from utils.io_gpu import balance_by_dataset_name`).
-from utils.sampling import balance_by_dataset_name  # noqa: E402,F401
-
-
 
 
 @lru_cache(maxsize=16)
@@ -127,15 +126,8 @@ def load_prompt_for_lang(prompt_name, lang):
 
 
 # ==================================================
-# STATS / HASHING  (moved from utils.py)
+# STATS / HASHING
 # ==================================================
-
-def save_stats(stats_path: str | Path, stats_dict: dict) -> None:
-    p = Path(stats_path)
-    p.parent.mkdir(parents=True, exist_ok=True)
-    with open(p, "w", encoding="utf-8") as f:
-        json.dump(stats_dict, f, ensure_ascii=False, indent=2)
-
 
 def file_sha256(path: Path) -> str:
     h = hashlib.sha256()
@@ -145,3 +137,16 @@ def file_sha256(path: Path) -> str:
 
 def language_counts(data: list[dict]) -> dict[str, int]:
     return dict(Counter(s.get("language", "unknown") for s in data))
+
+
+# ==================================================
+# Backward-compatible re-exports
+# Sampling logic lives in utils/sampling.py (no heavy deps, unit-testable);
+# re-exported here so existing `from utils.io_gpu import ...` imports keep
+# working (inference.py, train_qlora.py, translate_dataset.py).
+# ==================================================
+
+from utils.sampling import (  # noqa: E402,F401
+    balance_by_dataset_name,
+    balance_by_lang_and_dataset,
+)
