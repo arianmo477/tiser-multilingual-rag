@@ -1,4 +1,4 @@
-# tiser-multilingual-rag
+# tiser-multilingual
 
 Multilingual temporal reasoning with a small language model — a two-part extension of [TISER](https://aclanthology.org/2025.acl-long.1358/) (Bazaga et al., ACL 2025):
 
@@ -32,7 +32,45 @@ Per dataset:
 | tempreason_l2 | 0.840 | 85.05 | 0.810 | 0.810 | 0.810 | 100 |
 | tgqa | 0.854 | 73.46 | 0.550 | 0.520 | 0.860 | 100 |
 
+### Italian-only model — IT, 15k training samples
 
+Evaluated on 500 Italian samples across the five TISER categories.
+
+**Overall**
+
+| F1 | chrF | NormEM | EM | SoftEM | EngLeak |
+|---:|---:|---:|---:|---:|---:|
+| 0.881 | 87.67 | 0.790 | 0.772 | 0.838 | 0.006 |
+
+**Per dataset**
+
+| Dataset | F1 | chrF | NormEM | EM | SoftEM | EngLeak | N |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| timeqa_easy | 0.974 | 97.46 | 0.955 | 0.955 | 0.966 | 0.000 | 88 |
+| timeqa_hard | 0.923 | 94.48 | 0.885 | 0.885 | 0.885 | 0.000 | 96 |
+| tempreason_l3 | 0.892 | 90.14 | 0.860 | 0.822 | 0.879 | 0.028 | 107 |
+| tempreason_l2 | 0.807 | 80.34 | 0.733 | 0.695 | 0.733 | 0.000 | 105 |
+| tgqa | 0.828 | 77.96 | 0.548 | 0.539 | 0.750 | 0.000 | 104 |
+
+### Two-language model — EN + IT (15 000 training samples)
+
+Evaluated on 500 samples: 250 English and 250 Italian.
+
+| | F1 | chrF | NormEM | EM | SoftEM | EngLeak |
+|---|---:|---:|---:|---:|---:|---:|
+| **Overall** | 0.892 | 88.07 | 0.802 | 0.794 | 0.860 | 0.010 |
+| English | 0.911 | 89.34 | 0.836 | 0.832 | 0.900 | 0.000 |
+| Italian | 0.873 | 86.80 | 0.768 | 0.756 | 0.820 | 0.020 |
+
+Per dataset:
+
+| Dataset | F1 | EM | N |
+|---|---:|---:|---:|
+| timeqa_easy | 0.957 | 0.930 | 100 |
+| timeqa_hard | 0.925 | 0.860 | 100 |
+| tempreason_l3 | 0.930 | 0.880 | 100 |
+| tempreason_l2 | 0.817 | 0.760 | 100 |
+| tgqa | 0.831 | 0.540 | 100 |
 
 ### Four-language model — EN + IT + DE + FR (15 000 training samples)
 
@@ -153,6 +191,39 @@ Unit tests cover the balanced samplers and the metrics:
 ```bash
 python -m pytest tests/
 ```
+
+## Model checkpoints
+
+The fine-tuned LoRA adapters are available on the Hugging Face Hub. They apply
+on top of `Qwen/Qwen2.5-3B-Instruct` (4-bit NF4):
+
+| Adapter | Languages | Overall F1 (500-sample eval) | Link |
+|---|---|---:|---|
+| `en_15000_8gb_val_qlora` | EN | 0.921 (EN test) | [HF Hub](https://huggingface.co/arianmo47/en_15000_8gb_val_qlora) |
+| `de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora` | EN+IT+DE+FR | 0.888 (mixed test) | [HF Hub](https://huggingface.co/arianmo47/de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora) |
+
+Load one directly from the Hub:
+
+```python
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from peft import PeftModel
+
+ADAPTER = "arianmo47/de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora"
+
+base = AutoModelForCausalLM.from_pretrained(
+    "Qwen/Qwen2.5-3B-Instruct",
+    quantization_config=BitsAndBytesConfig(
+        load_in_4bit=True, bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.float16, bnb_4bit_use_double_quant=True),
+    device_map="auto", trust_remote_code=True)
+model = PeftModel.from_pretrained(base, ADAPTER)
+tokenizer = AutoTokenizer.from_pretrained(ADAPTER)
+```
+
+The Hub id can also be passed directly to the evaluation script's
+`--adapter_dir` argument (`PeftModel.from_pretrained` accepts both local paths
+and Hub ids).
 
 ### Project structure
 ```bash
