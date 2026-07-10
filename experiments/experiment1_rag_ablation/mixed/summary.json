@@ -1,0 +1,299 @@
+{
+  "files": {
+    "base_norag": "experiments/experiment1_rag_ablation/mixed/gen_base_norag.json",
+    "base_rag": "experiments/experiment1_rag_ablation/mixed/gen_base_rag.json",
+    "ft_norag": "experiments/experiment1_rag_ablation/mixed/gen_ft_norag.json",
+    "ft_rag": "experiments/experiment1_rag_ablation/mixed/gen_ft_rag.json"
+  },
+  "aligned_n": 100,
+  "rag_hit_rate": 0.83,
+  "overall": {
+    "base_norag": {
+      "f1": 0.5693544423412844,
+      "chrf": 60.73429250095825,
+      "norm_em": 0.42,
+      "em": 0.42,
+      "soft_em": 0.53,
+      "english_leak": 0.01,
+      "n": 100
+    },
+    "base_rag": {
+      "f1": 0.562302037310044,
+      "chrf": 60.81981945149389,
+      "norm_em": 0.37,
+      "em": 0.37,
+      "soft_em": 0.57,
+      "english_leak": 0.0,
+      "n": 100
+    },
+    "ft_norag": {
+      "f1": 0.8498025172282138,
+      "chrf": 84.08418520791915,
+      "norm_em": 0.74,
+      "em": 0.74,
+      "soft_em": 0.8,
+      "english_leak": 0.01,
+      "n": 100
+    },
+    "ft_rag": {
+      "f1": 0.8817615815556992,
+      "chrf": 86.88609695094001,
+      "norm_em": 0.78,
+      "em": 0.77,
+      "soft_em": 0.84,
+      "english_leak": 0.02,
+      "n": 100
+    }
+  },
+  "per_dataset": {
+    "tempreason_l2_test": {
+      "base_norag": {
+        "f1": 0.485115513141829,
+        "chrf": 52.434449850270155,
+        "norm_em": 0.3,
+        "em": 0.3,
+        "soft_em": 0.4,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "base_rag": {
+        "f1": 0.3553846153846154,
+        "chrf": 45.66049201452883,
+        "norm_em": 0.3,
+        "em": 0.3,
+        "soft_em": 0.35,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "ft_norag": {
+        "f1": 0.7438095238095237,
+        "chrf": 76.10238725112353,
+        "norm_em": 0.65,
+        "em": 0.65,
+        "soft_em": 0.65,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "ft_rag": {
+        "f1": 0.8535714285714284,
+        "chrf": 84.19230406322653,
+        "norm_em": 0.75,
+        "em": 0.7,
+        "soft_em": 0.75,
+        "english_leak": 0.05,
+        "n": 20
+      }
+    },
+    "tempreason_l3_test": {
+      "base_norag": {
+        "f1": 0.5542857142857144,
+        "chrf": 61.953833208946165,
+        "norm_em": 0.45,
+        "em": 0.45,
+        "soft_em": 0.5,
+        "english_leak": 0.05,
+        "n": 20
+      },
+      "base_rag": {
+        "f1": 0.6817748917748918,
+        "chrf": 74.38034092533898,
+        "norm_em": 0.5,
+        "em": 0.5,
+        "soft_em": 0.6,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "ft_norag": {
+        "f1": 0.875,
+        "chrf": 89.2161996795591,
+        "norm_em": 0.85,
+        "em": 0.85,
+        "soft_em": 0.85,
+        "english_leak": 0.05,
+        "n": 20
+      },
+      "ft_rag": {
+        "f1": 0.925,
+        "chrf": 93.7398744579028,
+        "norm_em": 0.9,
+        "em": 0.9,
+        "soft_em": 0.9,
+        "english_leak": 0.05,
+        "n": 20
+      }
+    },
+    "tgqa_test": {
+      "base_norag": {
+        "f1": 0.4857800751879699,
+        "chrf": 49.76490711468177,
+        "norm_em": 0.25,
+        "em": 0.25,
+        "soft_em": 0.4,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "base_rag": {
+        "f1": 0.40549103026790656,
+        "chrf": 37.98282838674606,
+        "norm_em": 0.05,
+        "em": 0.05,
+        "soft_em": 0.35,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "ft_norag": {
+        "f1": 0.7651236972521802,
+        "chrf": 67.34453789554485,
+        "norm_em": 0.4,
+        "em": 0.4,
+        "soft_em": 0.7,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "ft_rag": {
+        "f1": 0.7473793363499246,
+        "chrf": 66.54853487128608,
+        "norm_em": 0.45,
+        "em": 0.45,
+        "soft_em": 0.7,
+        "english_leak": 0.0,
+        "n": 20
+      }
+    },
+    "timeqa_easy_test": {
+      "base_norag": {
+        "f1": 0.7799242424242424,
+        "chrf": 80.55830890265663,
+        "norm_em": 0.6,
+        "em": 0.6,
+        "soft_em": 0.8,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "base_rag": {
+        "f1": 0.7805263157894737,
+        "chrf": 80.66012949016397,
+        "norm_em": 0.6,
+        "em": 0.6,
+        "soft_em": 0.85,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "ft_norag": {
+        "f1": 0.9428571428571428,
+        "chrf": 94.87244611873716,
+        "norm_em": 0.9,
+        "em": 0.9,
+        "soft_em": 0.9,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "ft_rag": {
+        "f1": 0.8928571428571429,
+        "chrf": 90.56036179643088,
+        "norm_em": 0.85,
+        "em": 0.85,
+        "soft_em": 0.85,
+        "english_leak": 0.0,
+        "n": 20
+      }
+    },
+    "timeqa_hard_test": {
+      "base_norag": {
+        "f1": 0.5416666666666666,
+        "chrf": 58.95996342823652,
+        "norm_em": 0.5,
+        "em": 0.5,
+        "soft_em": 0.55,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "base_rag": {
+        "f1": 0.5883333333333333,
+        "chrf": 65.41530644069162,
+        "norm_em": 0.4,
+        "em": 0.4,
+        "soft_em": 0.7,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "ft_norag": {
+        "f1": 0.9222222222222222,
+        "chrf": 92.88535509463107,
+        "norm_em": 0.9,
+        "em": 0.9,
+        "soft_em": 0.9,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "ft_rag": {
+        "f1": 0.99,
+        "chrf": 99.38940956585381,
+        "norm_em": 0.95,
+        "em": 0.95,
+        "soft_em": 1.0,
+        "english_leak": 0.0,
+        "n": 20
+      }
+    }
+  },
+  "per_language": {
+    "_note": "Only the ft_rag cell has per-language numbers here (taken from its inference log). base_norag, base_rag, and ft_norag per-language splits require the per-sample gen_*.json files: regenerate this summary with `SKIP_RUN=1 bash multilingual_rag_tiser/evaluation/run_experiment1.sh mixed <adapter_dir>` (updated script passes --per_language) and every null below will be filled with real numbers.",
+    "de": {
+      "base_norag": null,
+      "base_rag": null,
+      "ft_norag": null,
+      "ft_rag": {
+        "f1": 0.8322,
+        "chrf": 81.02,
+        "norm_em": 0.68,
+        "em": 0.68,
+        "soft_em": 0.8,
+        "english_leak": 0.08,
+        "n": 25
+      }
+    },
+    "en": {
+      "base_norag": null,
+      "base_rag": null,
+      "ft_norag": null,
+      "ft_rag": {
+        "f1": 0.8693,
+        "chrf": 84.99,
+        "norm_em": 0.8,
+        "em": 0.8,
+        "soft_em": 0.84,
+        "english_leak": 0.0,
+        "n": 25
+      }
+    },
+    "fr": {
+      "base_norag": null,
+      "base_rag": null,
+      "ft_norag": null,
+      "ft_rag": {
+        "f1": 0.9413,
+        "chrf": 92.01,
+        "norm_em": 0.84,
+        "em": 0.84,
+        "soft_em": 0.88,
+        "english_leak": 0.0,
+        "n": 25
+      }
+    },
+    "it": {
+      "base_norag": null,
+      "base_rag": null,
+      "ft_norag": null,
+      "ft_rag": {
+        "f1": 0.8842,
+        "chrf": 89.52,
+        "norm_em": 0.8,
+        "em": 0.76,
+        "soft_em": 0.84,
+        "english_leak": 0.0,
+        "n": 25
+      }
+    }
+  }
+}

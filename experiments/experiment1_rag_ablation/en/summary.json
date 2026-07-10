@@ -1,0 +1,240 @@
+{
+  "files": {
+    "base_norag": "experiments/experiment1_rag_ablation/en/gen_base_norag.json",
+    "base_rag": "experiments/experiment1_rag_ablation/en/gen_base_rag.json",
+    "ft_norag": "experiments/experiment1_rag_ablation/en/gen_ft_norag.json",
+    "ft_rag": "experiments/experiment1_rag_ablation/en/gen_ft_rag.json"
+  },
+  "aligned_n": 100,
+  "overall": {
+    "base_norag": {
+      "f1": 0.6879111181216444,
+      "chrf": 69.10538970312189,
+      "norm_em": 0.6,
+      "em": 0.59,
+      "soft_em": 0.65,
+      "english_leak": 0.0,
+      "n": 100
+    },
+    "base_rag": {
+      "f1": 0.736949805096864,
+      "chrf": 73.14501080324959,
+      "norm_em": 0.61,
+      "em": 0.6,
+      "soft_em": 0.66,
+      "english_leak": 0.0,
+      "n": 100
+    },
+    "ft_norag": {
+      "f1": 0.9224615384615384,
+      "chrf": 89.9905489575859,
+      "norm_em": 0.86,
+      "em": 0.84,
+      "soft_em": 0.92,
+      "english_leak": 0.0,
+      "n": 100
+    },
+    "ft_rag": {
+      "f1": 0.8988956925427513,
+      "chrf": 87.56828005697554,
+      "norm_em": 0.82,
+      "em": 0.81,
+      "soft_em": 0.89,
+      "english_leak": 0.0,
+      "n": 100
+    }
+  },
+  "per_dataset": {
+    "tempreason_l2_test": {
+      "base_norag": {
+        "f1": 0.5817532467532468,
+        "chrf": 57.22908909610665,
+        "norm_em": 0.45,
+        "em": 0.45,
+        "soft_em": 0.55,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "base_rag": {
+        "f1": 0.6737179487179488,
+        "chrf": 69.25164832107325,
+        "norm_em": 0.5,
+        "em": 0.5,
+        "soft_em": 0.55,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "ft_norag": {
+        "f1": 0.95,
+        "chrf": 95.63131313131314,
+        "norm_em": 0.95,
+        "em": 0.95,
+        "soft_em": 0.95,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "ft_rag": {
+        "f1": 0.9,
+        "chrf": 90.96464646464646,
+        "norm_em": 0.9,
+        "em": 0.9,
+        "soft_em": 0.9,
+        "english_leak": 0.0,
+        "n": 20
+      }
+    },
+    "tempreason_l3_test": {
+      "base_norag": {
+        "f1": 0.6381818181818182,
+        "chrf": 67.92139935713534,
+        "norm_em": 0.6,
+        "em": 0.6,
+        "soft_em": 0.65,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "base_rag": {
+        "f1": 0.77,
+        "chrf": 79.55095098507346,
+        "norm_em": 0.75,
+        "em": 0.75,
+        "soft_em": 0.75,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "ft_norag": {
+        "f1": 0.8400000000000001,
+        "chrf": 86.54624743361462,
+        "norm_em": 0.8,
+        "em": 0.8,
+        "soft_em": 0.8,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "ft_rag": {
+        "f1": 0.8400000000000001,
+        "chrf": 85.74301400275156,
+        "norm_em": 0.8,
+        "em": 0.8,
+        "soft_em": 0.8,
+        "english_leak": 0.0,
+        "n": 20
+      }
+    },
+    "tgqa_test": {
+      "base_norag": {
+        "f1": 0.5428744939271255,
+        "chrf": 54.43774827078418,
+        "norm_em": 0.35,
+        "em": 0.3,
+        "soft_em": 0.35,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "base_rag": {
+        "f1": 0.6499596481949422,
+        "chrf": 57.169720329271556,
+        "norm_em": 0.25,
+        "em": 0.25,
+        "soft_em": 0.45,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "ft_norag": {
+        "f1": 0.8223076923076922,
+        "chrf": 68.3043306733899,
+        "norm_em": 0.55,
+        "em": 0.5,
+        "soft_em": 0.85,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "ft_rag": {
+        "f1": 0.8544784627137568,
+        "chrf": 70.05399373877731,
+        "norm_em": 0.5,
+        "em": 0.45,
+        "soft_em": 0.85,
+        "english_leak": 0.0,
+        "n": 20
+      }
+    },
+    "timeqa_easy_test": {
+      "base_norag": {
+        "f1": 0.9095238095238095,
+        "chrf": 91.26000158344213,
+        "norm_em": 0.9,
+        "em": 0.9,
+        "soft_em": 0.9,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "base_rag": {
+        "f1": 0.9,
+        "chrf": 89.47597090108205,
+        "norm_em": 0.9,
+        "em": 0.85,
+        "soft_em": 0.9,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "ft_norag": {
+        "f1": 1.0,
+        "chrf": 99.47085354961186,
+        "norm_em": 1.0,
+        "em": 0.95,
+        "soft_em": 1.0,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "ft_rag": {
+        "f1": 0.95,
+        "chrf": 95.61678311573937,
+        "norm_em": 0.95,
+        "em": 0.95,
+        "soft_em": 0.95,
+        "english_leak": 0.0,
+        "n": 20
+      }
+    },
+    "timeqa_hard_test": {
+      "base_norag": {
+        "f1": 0.7672222222222222,
+        "chrf": 74.67871020814111,
+        "norm_em": 0.7,
+        "em": 0.7,
+        "soft_em": 0.8,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "base_rag": {
+        "f1": 0.6910714285714286,
+        "chrf": 70.27676347974761,
+        "norm_em": 0.65,
+        "em": 0.65,
+        "soft_em": 0.65,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "ft_norag": {
+        "f1": 1.0,
+        "chrf": 100.0,
+        "norm_em": 1.0,
+        "em": 1.0,
+        "soft_em": 1.0,
+        "english_leak": 0.0,
+        "n": 20
+      },
+      "ft_rag": {
+        "f1": 0.95,
+        "chrf": 95.46296296296296,
+        "norm_em": 0.95,
+        "em": 0.95,
+        "soft_em": 0.95,
+        "english_leak": 0.0,
+        "n": 20
+      }
+    }
+  },
+  "per_language": {}
+}
