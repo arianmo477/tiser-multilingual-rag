@@ -33,7 +33,6 @@ set is {base_norag, base_rag, ft_norag, ft_rag} the RAG deltas are printed too.
 
 import argparse
 import json
-from collections import defaultdict
 from pathlib import Path
 
 METRICS = ["f1", "chrf", "norm_em", "em", "soft_em", "english_leak"]
@@ -147,6 +146,8 @@ def main():
     ap.add_argument("pairs", nargs="+", help="label=path entries")
     ap.add_argument("--per_dataset", action="store_true",
                     help="Also break results down by dataset_name.")
+    ap.add_argument("--per_language", action="store_true",
+                    help="Also break results down by language.")
     ap.add_argument("--no_align", action="store_true",
                     help="Skip question_id alignment (compare raw files as-is).")
     ap.add_argument("--out", default=None, help="Optional path to save a JSON summary.")
@@ -182,19 +183,23 @@ def main():
     print_table("Overall", overall, labels)
     print_deltas(overall, labels)
 
-    per_dataset = {}
-    if args.per_dataset:
-        ds_names = set()
+    def breakdown(key, title_prefix):
+        """Group-and-print per value of `key`; returns {value: {label: metrics}}."""
+        out = {}
+        values = set()
         for rows in aligned.values():
-            ds_names.update(r.get("dataset_name", "unknown") for r in rows)
-        for ds in sorted(ds_names):
+            values.update(r.get(key, "unknown") for r in rows)
+        for v in sorted(values):
             per_cell = {}
             for label in labels:
-                subset = [r for r in aligned[label]
-                          if r.get("dataset_name", "unknown") == ds]
+                subset = [r for r in aligned[label] if r.get(key, "unknown") == v]
                 per_cell[label] = mean_metrics(subset)
-            per_dataset[ds] = per_cell
-            print_table(f"Dataset: {ds}", per_cell, labels)
+            out[v] = per_cell
+            print_table(f"{title_prefix}: {v}", per_cell, labels)
+        return out
+
+    per_dataset = breakdown("dataset_name", "Dataset") if args.per_dataset else {}
+    per_language = breakdown("language", "Language") if args.per_language else {}
 
     if args.out:
         out = Path(args.out)
@@ -204,6 +209,7 @@ def main():
             "aligned_n": len(common_ids) if common_ids is not None else None,
             "overall": overall,
             "per_dataset": per_dataset,
+            "per_language": per_language,
         }
         with open(out, "w", encoding="utf-8") as f:
             json.dump(summary, f, indent=2, ensure_ascii=False)

@@ -2,11 +2,14 @@
 """
 Inference / Evaluation for TISER with optional RAG ablation.
 
+Generation is iterative: generate once, then extend any response that did not
+emit </answer>, up to --max_extensions times.
+
 RAG modes (both expected to HURT — reported as negative finding):
   few_shot         Prepend retrieved solved examples as demonstrations.
   context_stuffing Append retrieved temporal contexts to the sample's own.
 
-Without --use_rag: identical behavior to tiser_lite/evaluation/inference.py.
+Without --use_rag: clean baseline evaluation.
 """
 
 import argparse
@@ -28,10 +31,11 @@ from transformers import (
     StoppingCriteriaList,
 )
 
-from utils.io_gpu import balance_by_dataset_name, load_prompt_for_lang
+from utils.io_gpu import load_prompt_for_lang
 from utils.metrics import calculate_metrics, clean_output, extract_answer
 from utils.prompt import build_prompt
 from utils.rag_utils import RAGContextBuilder
+from utils.sampling import balance_by_dataset_name, balance_by_lang_and_dataset
 
 
 # =============================================================================
@@ -74,10 +78,6 @@ def _generate(model, tokenizer, prompts, max_new_tokens, use_stop=True):
             stopping_criteria=stopping,
         )
     return tokenizer.batch_decode(outputs[:, prompt_len:], skip_special_tokens=True)
-
-
-def generate_batch(model, tokenizer, prompts, args):
-    return _generate(model, tokenizer, prompts, args.max_new_tokens)
 
 
 def generate_iterative(model, tokenizer, prompts, args):
@@ -140,6 +140,14 @@ def parse_args():
     p.add_argument("--output_file", required=True)
     p.add_argument("--max_eval_samples", type=int, default=None)
     p.add_argument(
+        "--balance",
+        choices=["dataset", "lang_dataset"],
+        default="dataset",
+        help="How to balance the --max_eval_samples subset: across dataset_name "
+             "only (default), or across every (language, dataset_name) cell — "
+             "use lang_dataset for mixed-language test files.",
+    )
+    p.add_argument(
         "--only_passed",
         action=argparse.BooleanOptionalAction,
         default=True,
@@ -147,8 +155,7 @@ def parse_args():
              "Use --no-only_passed to evaluate on the full set.",
     )
 
-    # Generation
-    p.add_argument("--strategy", choices=["base", "iterative"], default="iterative")
+    # Generation (iterative: extend until </answer> or max_extensions reached)
     p.add_argument("--max_extensions", type=int, default=2)
     p.add_argument("--max_new_tokens", type=int, default=768)
     p.add_argument("--batch_size", type=int, default=1)
@@ -176,8 +183,7 @@ def parse_args():
 
 
 def print_config(args):
-    print(f"Strategy:       {args.strategy}")
-    print(f"Max new tokens: {args.max_new_tokens}")
+    print(f"Max new tokens: {args.max_new_tokens} (+{args.max_extensions} extensions max)")
     if args.use_rag:
         print(f"RAG mode:       {args.rag_mode} (ablation)")
         print(f"RAG index:      {args.rag_index_dir}")
@@ -230,7 +236,12 @@ def load_data(args):
     if args.only_passed and "validation_status" in ds.column_names:
         ds = ds.filter(lambda x: x["validation_status"] == "PASS")
     if args.max_eval_samples:
-        ds = balance_by_dataset_name(
+        balance_fn = (
+            balance_by_lang_and_dataset
+            if args.balance == "lang_dataset"
+            else balance_by_dataset_name
+        )
+        ds = balance_fn(
             ds.shuffle(seed=42), category="test", max_samples=args.max_eval_samples,
         )
     data = [dict(x) for x in ds]
@@ -238,7 +249,7 @@ def load_data(args):
     lang_counts = Counter(s.get("language") for s in data)
     if lang_counts:
         print(f"\nLanguage distribution: {dict(lang_counts)}")
-    print(f"Strategy: '{args.strategy}' | Samples: {len(data)}")
+    print(f"Samples: {len(data)}")
     return data
 
 
@@ -322,7 +333,6 @@ def main():
         )
 
     data = load_data(args)
-    generate_fn = generate_iterative if args.strategy == "iterative" else generate_batch
 
     results = []
     overall = empty_bucket()
@@ -349,7 +359,7 @@ def main():
                 prompt, sample = base_prompt, ex
             prompts.append(build_prompt(sample, prompt=prompt))
 
-        decoded = generate_fn(model, tokenizer, prompts, args)
+        decoded = generate_iterative(model, tokenizer, prompts, args)
 
         for j, pred in enumerate(decoded):
             ex = batch[j]

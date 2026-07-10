@@ -12,16 +12,19 @@
 # learned) but adds little to the fine-tuned model — retrieval and fine-tuning
 # are substitutes, not complements.
 #
+# Base model is Qwen/Qwen2.5-3B-Instruct; generation is always iterative.
+#
 # Usage:
 #   bash multilingual_rag_tiser/evaluation/run_experiment1.sh \
-#       <qwen|mistral> <en|it|de|fr|mixed> <finetuned_adapter_dir> [max_samples]
+#       <en|it|de|fr|mixed> <finetuned_adapter_dir> [max_samples]
 #
 # Env overrides:
-#   PROMPT_NAME=tiser_full   STRATEGY=iterative
+#   PROMPT_NAME=tiser_full   BASE_MODEL=Qwen/Qwen2.5-3B-Instruct
 #   RAG_MODE=few_shot        RAG_TOP_K=1        RAG_MIN_SCORE=0.60
 #   TEST_FILE=...            RAG_TRAIN_FILE=...  RAG_INDEX_DIR=...
 #   RAG_EMBED_MODEL=sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
 #   OUT_DIR=experiments/experiment1_rag_ablation/<lang>
+#   BALANCE=dataset|lang_dataset   Subsample balancing (lang_dataset for mixed).
 #   SKIP_RUN=1               Only re-aggregate existing outputs (no inference).
 #   REBUILD_INDEX=1          Force-rebuild the RAG index from RAG_TRAIN_FILE even if one exists
 #                            (use after rewiring the source, e.g. to the 15k EN snapshot).
@@ -29,24 +32,22 @@
 set -euo pipefail
 export PYTHONPATH="$(pwd):${PYTHONPATH:-}"
 
-MODEL_TYPE="${1:-}"
-LANG="${2:-}"
-ADAPTER_DIR="${3:-}"
-MAX_SAMPLES="${4:-500}"
+LANG="${1:-}"
+ADAPTER_DIR="${2:-}"
+MAX_SAMPLES="${3:-500}"
 
-if [[ -z "$MODEL_TYPE" || -z "$LANG" || -z "$ADAPTER_DIR" ]]; then
+if [[ -z "$LANG" || -z "$ADAPTER_DIR" ]]; then
     cat <<EOF
 Usage:
-  bash run_experiment1.sh <qwen|mistral> <en|it|de|fr|mixed> \\
-    <finetuned_adapter_dir> [max_samples]
+  bash run_experiment1.sh <en|it|de|fr|mixed> <finetuned_adapter_dir> [max_samples]
 
 Runs 4 cells (base/ft x rag/norag) on the same samples and prints a comparison.
 EOF
     exit 1
 fi
 
+BASE_MODEL="${BASE_MODEL:-Qwen/Qwen2.5-3B-Instruct}"
 PROMPT_NAME="${PROMPT_NAME:-tiser_full}"
-STRATEGY="${STRATEGY:-iterative}"
 RAG_MODE="${RAG_MODE:-few_shot}"
 RAG_TOP_K="${RAG_TOP_K:-1}"
 RAG_MIN_SCORE="${RAG_MIN_SCORE:-0.60}"
@@ -54,11 +55,10 @@ RAG_EMBED_MODEL="${RAG_EMBED_MODEL:-sentence-transformers/paraphrase-multilingua
 SKIP_RUN="${SKIP_RUN:-0}"
 REBUILD_INDEX="${REBUILD_INDEX:-0}"
 
-case "$MODEL_TYPE" in
-    qwen)    BASE_MODEL="Qwen/Qwen2.5-3B-Instruct" ;;
-    mistral) BASE_MODEL="mistralai/Mistral-7B-Instruct-v0.2" ;;
-    *) echo "ERROR: unknown model type: $MODEL_TYPE"; exit 1 ;;
-esac
+# Balance the eval subset per (language, dataset) cell for mixed test sets.
+if [[ -z "${BALANCE:-}" ]]; then
+    if [[ "$LANG" == "mixed" ]]; then BALANCE="lang_dataset"; else BALANCE="dataset"; fi
+fi
 
 find_first() {
     for f in "$@"; do [[ -f "$f" ]] && { echo "$f"; return 0; }; done
@@ -114,8 +114,8 @@ Base model:  $BASE_MODEL
 Adapter:     $ADAPTER_DIR
 Language:    $LANG
 Test file:   $TEST_FILE
-Max samples: $MAX_SAMPLES
-Prompt:      $PROMPT_NAME     Strategy: $STRATEGY
+Max samples: $MAX_SAMPLES  (balance: $BALANCE)
+Prompt:      $PROMPT_NAME
 RAG:         mode=$RAG_MODE  top_k=$RAG_TOP_K  min_score=$RAG_MIN_SCORE
 RAG index:   $RAG_INDEX_DIR
 Output dir:  $OUT_DIR
@@ -180,8 +180,8 @@ run_cell() {
         --output_file "$out_file" \
         --max_new_tokens 768 \
         --batch_size 1 \
-        --strategy "$STRATEGY" \
         --prompt_name "$PROMPT_NAME" \
+        --balance "$BALANCE" \
         --only_passed \
         --max_extensions 2 \
         "${adapter_arg[@]}" \
@@ -207,4 +207,5 @@ python "$COMPARE_SCRIPT" \
     "ft_norag=$FT_NORAG" \
     "ft_rag=$FT_RAG" \
     --per_dataset \
+    --per_language \
     --out "${OUT_DIR}/summary.json"

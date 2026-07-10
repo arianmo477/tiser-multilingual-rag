@@ -1,28 +1,30 @@
 #!/usr/bin/env bash
+#
+# Single-run TISER evaluation with optional RAG.
+# Base model is Qwen/Qwen2.5-3B-Instruct; generation is always iterative.
 set -euo pipefail
 
 export PYTHONPATH="$(pwd):${PYTHONPATH:-}"
 
-MODEL_TYPE="${1:-}"
-LANG="${2:-}"
-ADAPTER_DIR="${3:-none}"
-STRATEGY="${4:-iterative}"
-PROMPT_NAME="${5:-tiser_full}"
-MAX_SAMPLES="${6:-500}"
+LANG="${1:-}"
+ADAPTER_DIR="${2:-none}"
+PROMPT_NAME="${3:-tiser_full}"
+MAX_SAMPLES="${4:-500}"
 
-if [[ -z "$MODEL_TYPE" || -z "$LANG" ]]; then
+if [[ -z "$LANG" ]]; then
     cat <<EOF
 Usage:
-  bash run_eval_rag.sh <qwen|mistral> <en|it|de|fr|mixed> \\
-    [adapter|none] [base|iterative] [prompt] [max_samples]
+  bash run_eval_rag.sh <en|it|de|fr|mixed> [adapter|none] [prompt] [max_samples]
 
 Env overrides:
+  BASE_MODEL=Qwen/Qwen2.5-3B-Instruct
   USE_RAG=0|1          Toggle RAG (default 1)
   RAG_MODE=few_shot|context_stuffing   (default few_shot)
   RAG_TOP_K=1          Exemplars (1–2)
   RAG_MIN_SCORE=0.60   Cosine threshold (NOT 0.9)
   RAG_INDEX_DIR=...    Override index dir
   RAG_TRAIN_FILE=...   Override train file for index build
+  BALANCE=dataset|lang_dataset   Subsample balancing (lang_dataset for mixed)
 EOF
     exit 1
 fi
@@ -35,11 +37,12 @@ RAG_MIN_SCORE="${RAG_MIN_SCORE:-0.60}"
 RAG_EMBED_MODEL="${RAG_EMBED_MODEL:-sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2}"
 
 # ---- Base model ----
-case "$MODEL_TYPE" in
-    qwen)    BASE_MODEL="Qwen/Qwen2.5-3B-Instruct" ;;
-    mistral) BASE_MODEL="mistralai/Mistral-7B-Instruct-v0.2" ;;
-    *) echo "ERROR: unknown model type: $MODEL_TYPE"; exit 1 ;;
-esac
+BASE_MODEL="${BASE_MODEL:-Qwen/Qwen2.5-3B-Instruct}"
+
+# ---- Subsample balancing ----
+if [[ -z "${BALANCE:-}" ]]; then
+    if [[ "$LANG" == "mixed" ]]; then BALANCE="lang_dataset"; else BALANCE="dataset"; fi
+fi
 
 # ---- Test file ----
 find_first() {
@@ -80,7 +83,7 @@ RAG_INDEX_DIR="${RAG_INDEX_DIR:-data/rag/train_${LANG}}"
 # ---- Output ----
 TIMESTAMP="$(date +"%Y%m%d_%H%M%S")"
 if [[ "$ADAPTER_DIR" == "none" ]]; then
-    RESULTS_DIR="experiments/${MODEL_TYPE}_base/results"
+    RESULTS_DIR="experiments/qwen_base/results"
     MODEL_NAME="base"
     ADAPTER_ARG=()
 else
@@ -94,7 +97,7 @@ mkdir -p "$RESULTS_DIR"
 RAG_SUFFIX=""
 [[ "$USE_RAG" == "1" ]] && RAG_SUFFIX="_rag_${RAG_MODE}_k${RAG_TOP_K}_s${RAG_MIN_SCORE}"
 
-GEN_OUTPUT="${RESULTS_DIR}/gen_${MODEL_NAME}_${LANG}_${STRATEGY}_${PROMPT_NAME}${RAG_SUFFIX}_${TIMESTAMP}.json"
+GEN_OUTPUT="${RESULTS_DIR}/gen_${MODEL_NAME}_${LANG}_${PROMPT_NAME}${RAG_SUFFIX}_${TIMESTAMP}.json"
 
 MAX_SAMPLES_ARG=()
 [[ -n "$MAX_SAMPLES" && "$MAX_SAMPLES" != "0" ]] && \
@@ -112,9 +115,8 @@ TISER RAG Evaluation
 Model:       $BASE_MODEL
 Adapter:     $ADAPTER_DIR
 Language:    $LANG
-Strategy:    $STRATEGY
 Prompt:      $PROMPT_NAME
-Max samples: $MAX_SAMPLES
+Max samples: $MAX_SAMPLES  (balance: $BALANCE)
 Test file:   $TEST_FILE
 Output:      $GEN_OUTPUT
 
@@ -176,8 +178,8 @@ python "$INFERENCE_SCRIPT" \
     --output_file "$GEN_OUTPUT" \
     --max_new_tokens 768 \
     --batch_size 1 \
-    --strategy "$STRATEGY" \
     --prompt_name "$PROMPT_NAME" \
+    --balance "$BALANCE" \
     --only_passed \
     --max_extensions 2 \
     "${ADAPTER_ARG[@]}" \

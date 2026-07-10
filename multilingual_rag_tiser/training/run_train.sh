@@ -1,38 +1,46 @@
 #!/usr/bin/env bash
+#
+# QLoRA training launcher (8GB-VRAM-safe defaults).
+# Base model is Qwen/Qwen2.5-3B-Instruct (override with BASE_MODEL=...).
 set -euo pipefail
 
 export PYTHONPATH="$(pwd):${PYTHONPATH:-}"
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
-MODEL="${1:-}"              # qwen
-LANG="${2:-}"               # en, it, de, en_it_de_mixed_15000, mixed
-PROMPT_NAME="${3:-tiser_full}"
-MAX_SAMPLES="${4:-2000}"        # optional
+LANG="${1:-}"               # en, it, de, fr, mixed, en_it_de_mixed_15000, ...
+PROMPT_NAME="${2:-tiser_full}"
+MAX_SAMPLES="${3:-2000}"    # optional
 
-if [[ -z "$MODEL" || -z "$LANG" ]]; then
+if [[ -z "$LANG" ]]; then
   echo "Usage:"
-  echo "  bash multilingual_tiser/training/run_train.sh qwen en tiser_full 15000"
-  echo "  bash multilingual_tiser/training/run_train.sh qwen it tiser_full 15000"
-  echo "  bash multilingual_tiser/training/run_train.sh qwen de tiser_full 15000"
-  echo "  bash multilingual_tiser/training/run_train.sh qwen en_it_de_mixed_15000 tiser_full"
-  echo "  bash multilingual_tiser/training/run_train.sh qwen mixed tiser_full 15000"
+  echo "  bash multilingual_rag_tiser/training/run_train.sh en tiser_full 15000"
+  echo "  bash multilingual_rag_tiser/training/run_train.sh it tiser_full 15000"
+  echo "  bash multilingual_rag_tiser/training/run_train.sh de tiser_full 15000"
+  echo "  bash multilingual_rag_tiser/training/run_train.sh fr tiser_full 15000"
+  echo "  bash multilingual_rag_tiser/training/run_train.sh mixed tiser_full 15000"
+  echo "  bash multilingual_rag_tiser/training/run_train.sh en_it_de_mixed_15000 tiser_full"
+  echo ""
+  echo "Env overrides: BASE_MODEL=Qwen/Qwen2.5-3B-Instruct  BALANCE=dataset|lang_dataset"
   exit 1
 fi
 
 # -------------------------
 # Base model
 # -------------------------
-if [[ "$MODEL" == "qwen" ]]; then
-  MODEL_NAME="Qwen/Qwen2.5-3B-Instruct"
-else
-  echo "ERROR: unsupported model type: $MODEL"
-  echo "Currently supported: qwen"
-  exit 1
+MODEL_NAME="${BASE_MODEL:-Qwen/Qwen2.5-3B-Instruct}"
+
+# -------------------------
+# Subsample balancing (per (lang, dataset) cell for mixed-language files)
+# -------------------------
+if [[ -z "${BALANCE:-}" ]]; then
+  if [[ "$LANG" == *"mixed"* ]]; then BALANCE="lang_dataset"; else BALANCE="dataset"; fi
 fi
 
 # -------------------------
 # Select train file
 # -------------------------
+# For single languages: prefer the quality-filtered "_passed" file, fall back
+# to the raw translated split.
 TRAIN_FILE=""
 
 if [[ "$LANG" == "en" ]]; then
@@ -45,19 +53,11 @@ if [[ "$LANG" == "en" ]]; then
     TRAIN_FILE="data/splits/train/TISER_train_en.json"
   fi
 
-elif [[ "$LANG" == "it" ]]; then
-  # Use passed file if it exists, otherwise fallback to raw translated file
-  if [[ -f "data/splits/train/it/TISER_train_it_passed.json" ]]; then
-    TRAIN_FILE="data/splits/train/it/TISER_train_it_passed.json"
+elif [[ "$LANG" == "it" || "$LANG" == "de" || "$LANG" == "fr" ]]; then
+  if [[ -f "data/splits/train/${LANG}/TISER_train_${LANG}_passed.json" ]]; then
+    TRAIN_FILE="data/splits/train/${LANG}/TISER_train_${LANG}_passed.json"
   else
-    TRAIN_FILE="data/splits/train/TISER_train_it.json"
-  fi
-
-elif [[ "$LANG" == "de" ]]; then
-  if [[ -f "data/splits/train/de/TISER_train_de_passed.json" ]]; then
-    TRAIN_FILE="data/splits/train/de/TISER_train_de_passed.json"
-  else
-    TRAIN_FILE="data/splits/train/TISER_train_de.json"
+    TRAIN_FILE="data/splits/train/TISER_train_${LANG}.json"
   fi
 
 elif [[ "$LANG" == "mixed" ]]; then
@@ -65,7 +65,7 @@ elif [[ "$LANG" == "mixed" ]]; then
   if [[ -z "$MAX_SAMPLES" ]]; then
     echo "ERROR: for LANG=mixed you should pass MAX_SAMPLES."
     echo "Example:"
-    echo "  bash multilingual_tiser/training/run_train.sh qwen mixed tiser_full 15000"
+    echo "  bash multilingual_rag_tiser/training/run_train.sh mixed tiser_full 15000"
     exit 1
   fi
 
@@ -97,16 +97,16 @@ fi
 # -------------------------
 # max samples arg
 # -------------------------
-MAX_SAMPLES_ARG=""
+MAX_SAMPLES_ARG=()
 if [[ -n "$MAX_SAMPLES" ]]; then
-  MAX_SAMPLES_ARG="--max_train_samples $MAX_SAMPLES"
+  MAX_SAMPLES_ARG=(--max_train_samples "$MAX_SAMPLES")
 fi
 
 # -------------------------
 # Output dir
 # -------------------------
 SAMPLE_NAME="${MAX_SAMPLES:-full}"
-OUT_DIR="experiments/${MODEL}/${LANG}_${PROMPT_NAME}_${SAMPLE_NAME}_8gb_val_qlora"
+OUT_DIR="experiments/qwen/${LANG}_${PROMPT_NAME}_${SAMPLE_NAME}_8gb_val_qlora"
 mkdir -p "$OUT_DIR"
 
 # -------------------------
@@ -138,21 +138,19 @@ fi
 
 echo "=============================="
 echo " STARTING 8GB VRAM TRAINING"
-echo "Model Type    : $MODEL"
 echo "Model         : $MODEL_NAME"
 echo "Prompt        : $PROMPT_NAME"
 echo "Lang/Dataset  : $LANG"
 echo "Train File    : $TRAIN_FILE"
 echo "Output Dir    : $OUT_DIR"
-echo "Max Samples   : ${MAX_SAMPLES:-all}"
+echo "Max Samples   : ${MAX_SAMPLES:-all}  (balance: $BALANCE)"
 echo "Max Length    : $MAX_LEN"
 echo "LoRA Rank     : $LORA_R"
 echo "LoRA Alpha    : $LORA_ALPHA"
 echo "Batch Size    : $PER_DEVICE_BS"
 echo "Grad Accum    : $GRAD_ACCUM"
 echo "Validation    : $VAL_SPLIT"
-echo "Eval Steps    : $EVAL_STEPS"
-echo "Save Steps    : $EVAL_STEPS"
+echo "Eval/Save Steps: $EVAL_STEPS"
 echo "=============================="
 
 python multilingual_rag_tiser/training/train_qlora.py \
@@ -167,7 +165,6 @@ python multilingual_rag_tiser/training/train_qlora.py \
   --lora_dropout "$LORA_DROPOUT" \
   --per_device_batch_size "$PER_DEVICE_BS" \
   --grad_accum "$GRAD_ACCUM" \
-  --save_steps "$EVAL_STEPS" \
   --logging_steps 10 \
   --eval_steps "$EVAL_STEPS" \
   --validation_split "$VAL_SPLIT" \
@@ -175,6 +172,7 @@ python multilingual_rag_tiser/training/train_qlora.py \
   --gradient_checkpointing 1 \
   --gpu_memory_gb 7 \
   --cpu_memory_gb 16 \
-  $MAX_SAMPLES_ARG \
+  --balance "$BALANCE" \
+  "${MAX_SAMPLES_ARG[@]}" \
   --only_passed \
   --prompt_name "$PROMPT_NAME"

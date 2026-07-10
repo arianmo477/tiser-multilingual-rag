@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+
 """
 QLoRA Training Script — Class-Based Refactor (8GB VRAM + Validation Safe)
 
@@ -6,9 +6,8 @@ Key features:
 - 8GB-friendly defaults
 - 4-bit QLoRA
 - Validation split support
-- Best checkpoint by eval loss
+- Best checkpoint by eval loss (checkpoints saved at every eval step)
 - CPU offload support
-- group_by_length enabled
 """
 
 import argparse
@@ -28,8 +27,9 @@ from transformers import (
 )
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 
-from utils.io_gpu import balance_by_dataset_name, load_prompt_for_lang
+from utils.io_gpu import load_prompt_for_lang
 from utils.prompt import build_prompt
+from utils.sampling import balance_by_dataset_name, balance_by_lang_and_dataset
 
 # -------------------------
 # OPTIMIZATION FLAGS
@@ -84,8 +84,16 @@ class QLoRADatasetHandler:
             print(f"Filtered to PASS samples: {len(dataset)}")
 
         if self.args.max_train_samples:
-            print(f"Balancing dataset to max {self.args.max_train_samples} samples...")
-            dataset = balance_by_dataset_name(
+            balance_fn = (
+                balance_by_lang_and_dataset
+                if self.args.balance == "lang_dataset"
+                else balance_by_dataset_name
+            )
+            print(
+                f"Balancing dataset to max {self.args.max_train_samples} samples "
+                f"(balance={self.args.balance})..."
+            )
+            dataset = balance_fn(
                 dataset.shuffle(seed=42),
                 category="train",
                 max_samples=self.args.max_train_samples,
@@ -282,6 +290,8 @@ class QLoRATrainerBuilder:
     # ------------------------------------------------------------------
     def _training_args(self) -> TrainingArguments:
         has_eval = self.eval_dataset is not None
+        # save_steps is tied to eval_steps: load_best_model_at_end requires a
+        # checkpoint at every evaluation point.
         return TrainingArguments(
             output_dir=self.args.output_dir,
             num_train_epochs=self.args.epochs,
@@ -381,6 +391,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--train_file", required=True)
     parser.add_argument("--output_dir", required=True)
     parser.add_argument("--max_train_samples", type=int, default=None)
+    parser.add_argument(
+        "--balance",
+        choices=["dataset", "lang_dataset"],
+        default="dataset",
+        help="How to balance the --max_train_samples subset: across dataset_name "
+             "only (default), or across every (language, dataset_name) cell — "
+             "use lang_dataset for mixed-language train files.",
+    )
     parser.add_argument("--only_passed", action="store_true")
     parser.add_argument("--prompt_name", type=str, default="tiser_full")
 
@@ -398,9 +416,12 @@ def parse_args() -> argparse.Namespace:
 
     # Optimization
     parser.add_argument("--gradient_checkpointing", type=int, default=1)
-    parser.add_argument("--save_steps", type=int, default=100)
     parser.add_argument("--logging_steps", type=int, default=10)
-    parser.add_argument("--eval_steps", type=int, default=100)
+    parser.add_argument(
+        "--eval_steps", type=int, default=100,
+        help="Evaluate AND checkpoint every N steps (save is tied to eval "
+             "because best-checkpoint selection needs a save at each eval).",
+    )
     parser.add_argument("--dataloader_num_workers", type=int, default=0)
 
     # Validation

@@ -1,17 +1,16 @@
 #!/usr/bin/env bash
-set -e
-export PYTHONPATH="$(pwd):$PYTHONPATH"
+set -euo pipefail
+export PYTHONPATH="$(pwd):${PYTHONPATH:-}"
 # -------------------------
 # TISER translation quality scorer
 # -------------------------
 # Usage:
-#   bash multilingual_tiser/translate/run_score.sh <category> <lang> [threshold]
+#   bash multilingual_rag_tiser/translate/run_score.sh <category> <lang> [threshold]
 #
 # Examples:
-#   bash multilingual_tiser/translate/run_score.sh train it
-#   bash multilingual_tiser/translate/run_score.sh train de 0.94
-#   bash multilingual_tiser/translate/run_score.sh val   fr 0.95
-#   bash multilingual_tiser/translate/run_score.sh test  fa 0.92
+#   bash multilingual_rag_tiser/translate/run_score.sh train it
+#   bash multilingual_rag_tiser/translate/run_score.sh train de 0.94
+#   bash multilingual_rag_tiser/translate/run_score.sh val   fr 0.95
 # -------------------------
 
 CATEGORY="${1:-}"
@@ -19,17 +18,17 @@ LANG="${2:-it}"
 THRESHOLD="${3:-0.94}"
 
 if [[ -z "$CATEGORY" ]]; then
-    echo "Usage: bash multilingual_tiser/translate/run_score.sh <category> <lang> [threshold]"
+    echo "Usage: bash multilingual_rag_tiser/translate/run_score.sh <category> <lang> [threshold]"
     echo "  category:  train | val | test"
-    echo "  lang:      it | de | fr | fa  (default: it)"
+    echo "  lang:      it | de | fr  (default: it)"
     echo "  threshold: pass threshold (default: 0.94)"
     exit 1
 fi
 
 case "$LANG" in
-    it|de|fr|fa) ;;
+    it|de|fr) ;;
     *)
-        echo "ERROR: unsupported lang '$LANG' (must be it|de|fr|fa)"
+        echo "ERROR: unsupported lang '$LANG' (must be it|de|fr)"
         exit 1
         ;;
 esac
@@ -38,7 +37,7 @@ INPUT="data/splits/${CATEGORY}/TISER_${CATEGORY}_${LANG}.json"
 REPORT="data/splits/${CATEGORY}/${LANG}/translation_quality_report.json"
 PASSED_OUT="data/splits/${CATEGORY}/${LANG}/TISER_${CATEGORY}_${LANG}_passed.json"
 FAILED_OUT="data/splits/${CATEGORY}/${LANG}/TISER_${CATEGORY}_${LANG}_failed.json"
-SCRIPT="multilingual_tiser/translate/score_translation.py"
+SCRIPT="multilingual_rag_tiser/translate/score_translation.py"
 
 echo "========================================"
 echo "TISER Translation Quality Scoring"

@@ -1,27 +1,27 @@
 #!/usr/bin/env bash
-set -e
-export PYTHONPATH="$(pwd):$PYTHONPATH"
+set -euo pipefail
+export PYTHONPATH="$(pwd):${PYTHONPATH:-}"
 
-CATEGORY="$1"
+CATEGORY="${1:-}"
 LANG="${2:-it}"
 MAX_SAMPLES="${3:-0}"
 
 if [[ -z "$CATEGORY" ]]; then
-    echo "Usage: bash multilingual_tiser/translate/run_translate.sh <category> <lang> [max_samples]"
+    echo "Usage: bash multilingual_rag_tiser/translate/run_translate.sh <category> <lang> [max_samples]"
     echo "  category: train | val | test"
-    echo "  lang:     it | de | fr | fa"
+    echo "  lang:     it | de | fr"
     exit 1
 fi
 
 case "$LANG" in
-    it|de|fr|fa) ;;
-    *) echo "ERROR: unsupported lang '$LANG' (use it|de|fr|fa)"; exit 1 ;;
+    it|de|fr) ;;
+    *) echo "ERROR: unsupported lang '$LANG' (use it|de|fr)"; exit 1 ;;
 esac
 
 INPUT="data/splits/${CATEGORY}/TISER_${CATEGORY}_en.json"
 OUTPUT="data/splits/${CATEGORY}/TISER_${CATEGORY}_${LANG}.json"
 CACHE="data/splits/${CATEGORY}/event_translation_cache_${LANG}.json"
-SCRIPT="multilingual_tiser/translate/translate_dataset.py"
+SCRIPT="multilingual_rag_tiser/translate/translate_dataset.py"
 
 echo "========================================"
 echo "TISER Translation EN -> ${LANG^^}"
