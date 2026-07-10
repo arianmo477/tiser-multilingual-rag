@@ -1,0 +1,24 @@
+======================================================================
+FINAL OVERALL
+======================================================================
+F1=0.8633  chrF=86.05  NormEM=0.7640  EM=0.7540  SoftEM=0.8240  EngLeak=0.0080  N=500
+
+RAG (few_shot): 500/500 samples retrieved above min_score=0.6 (100.0%)
+  ↳ High hit rate — noise present for most samples.
+
+Per-language:
+  [de] F1=0.8975  chrF=87.53  NormEM=0.7920  EM=0.7920  SoftEM=0.8800  EngLeak=0.0080  N=125
+  [en] F1=0.8350  chrF=85.32  NormEM=0.7520  EM=0.7520  SoftEM=0.8000  EngLeak=0.0000  N=125
+  [fr] F1=0.8257  chrF=82.09  NormEM=0.7040  EM=0.6880  SoftEM=0.7520  EngLeak=0.0160  N=125
+  [it] F1=0.8952  chrF=89.25  NormEM=0.8080  EM=0.7840  SoftEM=0.8640  EngLeak=0.0080  N=125
+
+Per-dataset:
+  [tempreason_l2_test] F1=0.8469  chrF=85.14  NormEM=0.7700  EM=0.7400  SoftEM=0.7700  EngLeak=0.0100  N=100
+  [tempreason_l3_test] F1=0.8586  chrF=89.13  NormEM=0.8100  EM=0.8000  SoftEM=0.8300  EngLeak=0.0300  N=100
+  [tgqa_test] F1=0.7900  chrF=71.47  NormEM=0.5300  EM=0.5200  SoftEM=0.7300  EngLeak=0.0000  N=100
+  [timeqa_easy_test] F1=0.9427  chrF=94.90  NormEM=0.8800  EM=0.8800  SoftEM=0.9300  EngLeak=0.0000  N=100
+  [timeqa_hard_test] F1=0.8784  chrF=89.61  NormEM=0.8300  EM=0.8300  SoftEM=0.8600  EngLeak=0.0000  N=100
+======================================================================
+Results saved to: experiments/qwen/de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora/results/gen_de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora_mixed_iterative_tiser_full_rag_few_shot_k1_s0.60_20260701_100915.json
+
+Generation complete: experiments/qwen/de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora/results/gen_de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora_mixed_iterative_tiser_full_rag_few_shot_k1_s0.60_20260701_100915.json

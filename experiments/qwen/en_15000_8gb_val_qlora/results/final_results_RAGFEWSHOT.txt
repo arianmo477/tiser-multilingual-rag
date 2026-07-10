@@ -1,0 +1,18 @@
+======================================================================
+FINAL OVERALL
+======================================================================
+F1=0.9112  chrF=89.03  NormEM=0.8240  EM=0.8160  SoftEM=0.8980  EngLeak=0.0000  N=500
+
+RAG (few_shot): 500/500 samples retrieved above min_score=0.6 (100.0%)
+  ↳ High hit rate — noise present for most samples.
+
+Per-dataset:
+  [tempreason_l2_test] F1=0.8311  chrF=83.98  NormEM=0.7800  EM=0.7800  SoftEM=0.7900  EngLeak=0.0000  N=100
+  [tempreason_l3_test] F1=0.9607  chrF=96.14  NormEM=0.9500  EM=0.9500  SoftEM=0.9500  EngLeak=0.0000  N=100
+  [tgqa_test] F1=0.8421  chrF=71.90  NormEM=0.5200  EM=0.4900  SoftEM=0.8400  EngLeak=0.0000  N=100
+  [timeqa_easy_test] F1=0.9727  chrF=97.75  NormEM=0.9500  EM=0.9500  SoftEM=0.9700  EngLeak=0.0000  N=100
+  [timeqa_hard_test] F1=0.9497  chrF=95.38  NormEM=0.9200  EM=0.9100  SoftEM=0.9400  EngLeak=0.0000  N=100
+======================================================================
+Results saved to: experiments/qwen/en_15000_8gb_val_qlora/results/gen_en_15000_8gb_val_qlora_en_iterative_tiser_full_rag_few_shot_k1_s0.60_20260701_203318.json
+
+Generation complete: experiments/qwen/en_15000_8gb_val_qlora/results/gen_en_15000_8gb_val_qlora_en_iterative_tiser_full_rag_few_shot_k1_s0.60_20260701_203318.json

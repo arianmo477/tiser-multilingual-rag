@@ -1,0 +1,22 @@
+======================================================================
+FINAL OVERALL
+======================================================================
+F1=0.8874  chrF=88.42  NormEM=0.7940  EM=0.7880  SoftEM=0.8540  EngLeak=0.0060  N=500
+
+Per-language:
+  [de] F1=0.8898  chrF=87.87  NormEM=0.7920  EM=0.7920  SoftEM=0.8640  EngLeak=0.0080  N=125
+  [en] F1=0.9086  chrF=90.27  NormEM=0.8240  EM=0.8240  SoftEM=0.8960  EngLeak=0.0000  N=125
+  [fr] F1=0.8651  chrF=86.02  NormEM=0.7600  EM=0.7520  SoftEM=0.8080  EngLeak=0.0080  N=125
+  [it] F1=0.8861  chrF=89.50  NormEM=0.8000  EM=0.7840  SoftEM=0.8480  EngLeak=0.0080  N=125
+
+Per-dataset:
+  [tempreason_l2_test] F1=0.8259  chrF=84.53  NormEM=0.7600  EM=0.7500  SoftEM=0.7700  EngLeak=0.0000  N=100
+  [tempreason_l3_test] F1=0.8961  chrF=91.80  NormEM=0.8600  EM=0.8500  SoftEM=0.8700  EngLeak=0.0300  N=100
+  [tgqa_test] F1=0.8073  chrF=73.41  NormEM=0.5200  EM=0.5100  SoftEM=0.7700  EngLeak=0.0000  N=100
+  [timeqa_easy_test] F1=0.9762  chrF=98.12  NormEM=0.9400  EM=0.9400  SoftEM=0.9600  EngLeak=0.0000  N=100
+  [timeqa_hard_test] F1=0.9317  chrF=94.22  NormEM=0.8900  EM=0.8900  SoftEM=0.9000  EngLeak=0.0000  N=100
+======================================================================
+Results saved to: experiments/qwen/de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora/results/gen_de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora_mixed_iterative_tiser_full_20260629_093247.json
+Generation complete: experiments/qwen/de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora/results/gen_de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora_mixed_iterative_tiser_full_20260629_093247.json
+
+Generation complete: experiments/qwen/de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora/results/gen_de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora_mixed_iterative_tiser_full_20260629_093247.json

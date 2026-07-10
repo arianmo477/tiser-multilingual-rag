@@ -1,0 +1,17 @@
+
+
+======================================================================
+FINAL OVERALL
+======================================================================
+F1=0.6905  chrF=69.88  NormEM=0.5800  EM=0.5740  SoftEM=0.6480  EngLeak=0.0000  N=500
+
+Per-dataset:
+  [tempreason_l2_test] F1=0.5171  chrF=54.05  NormEM=0.3600  EM=0.3600  SoftEM=0.4000  EngLeak=0.0000  N=100
+  [tempreason_l3_test] F1=0.7637  chrF=77.79  NormEM=0.7200  EM=0.7200  SoftEM=0.7500  EngLeak=0.0000  N=100
+  [tgqa_test] F1=0.5149  chrF=50.86  NormEM=0.3400  EM=0.3200  SoftEM=0.4400  EngLeak=0.0000  N=100
+  [timeqa_easy_test] F1=0.9293  chrF=93.42  NormEM=0.8600  EM=0.8500  SoftEM=0.9200  EngLeak=0.0000  N=100
+  [timeqa_hard_test] F1=0.7272  chrF=73.28  NormEM=0.6200  EM=0.6200  SoftEM=0.7300  EngLeak=0.0000  N=100
+======================================================================
+Results saved to: experiments/qwen_base/results/gen_base_en_iterative_tiser_full_20260703_194241.json
+
+Generation complete: experiments/qwen_base/results/gen_base_en_iterative_tiser_full_20260703_194241.json

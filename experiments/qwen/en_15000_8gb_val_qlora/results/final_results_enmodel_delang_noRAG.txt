@@ -1,0 +1,15 @@
+======================================================================
+FINAL OVERALL
+======================================================================
+F1=0.7833  chrF=79.33  NormEM=0.6740  EM=0.6720  SoftEM=0.7580  EngLeak=0.0480  N=500
+
+Per-dataset:
+  [tempreason_l2_test] F1=0.6824  chrF=73.90  NormEM=0.6000  EM=0.5900  SoftEM=0.6300  EngLeak=0.1400  N=100
+  [tempreason_l3_test] F1=0.7758  chrF=81.81  NormEM=0.6900  EM=0.6900  SoftEM=0.6900  EngLeak=0.0800  N=100
+  [tgqa_test] F1=0.7485  chrF=65.44  NormEM=0.5100  EM=0.5100  SoftEM=0.7700  EngLeak=0.0000  N=100
+  [timeqa_easy_test] F1=0.9291  chrF=94.64  NormEM=0.8600  EM=0.8600  SoftEM=0.9300  EngLeak=0.0100  N=100
+  [timeqa_hard_test] F1=0.7809  chrF=80.89  NormEM=0.7100  EM=0.7100  SoftEM=0.7700  EngLeak=0.0100  N=100
+======================================================================
+Results saved to: experiments/qwen/en_15000_8gb_val_qlora/results/gen_en_15000_8gb_val_qlora_de_iterative_tiser_full_20260703_091332.json
+
+Generation complete: experiments/qwen/en_15000_8gb_val_qlora/results/gen_en_15000_8gb_val_qlora_de_iterative_tiser_full_20260703_091332.json

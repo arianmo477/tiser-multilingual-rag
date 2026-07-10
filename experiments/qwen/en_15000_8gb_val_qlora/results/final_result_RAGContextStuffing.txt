@@ -1,0 +1,18 @@
+======================================================================
+FINAL OVERALL
+======================================================================
+F1=0.8889  chrF=87.24  NormEM=0.8060  EM=0.8040  SoftEM=0.8700  EngLeak=0.0000  N=500
+
+RAG (context_stuffing): 500/500 samples retrieved above min_score=0.6 (100.0%)
+  ↳ High hit rate — noise present for most samples.
+
+Per-dataset:
+  [tempreason_l2_test] F1=0.7867  chrF=80.26  NormEM=0.7500  EM=0.7500  SoftEM=0.7500 EngLeak=0.0000  N=100
+  [tempreason_l3_test] F1=0.9538  chrF=95.31  NormEM=0.9300  EM=0.9300  SoftEM=0.9300 EngLeak=0.0000  N=100
+  [tgqa_test] F1=0.8374  chrF=72.24  NormEM=0.5500  EM=0.5500  SoftEM=0.8300  EngLeak=0.0000  N=100
+  [timeqa_easy_test] F1=0.9606  chrF=96.65  NormEM=0.9500  EM=0.9500  SoftEM=0.9600  EngLeak=0.0000  N=100
+  [timeqa_hard_test] F1=0.9062  chrF=91.75  NormEM=0.8500  EM=0.8400  SoftEM=0.8800  EngLeak=0.0000  N=100
+======================================================================
+Results saved to: experiments/qwen/en_15000_8gb_val_qlora/results/gen_en_15000_8gb_val_qlora_en_iterative_tiser_full_rag_context_stuffing_k1_s0.60_20260701_171558.json
+
+Generation complete: experiments/qwen/en_15000_8gb_val_qlora/results/gen_en_15000_8gb_val_qlora_en_iterative_tiser_full_rag_context_stuffing_k1_s0.60_20260701_171558.json
