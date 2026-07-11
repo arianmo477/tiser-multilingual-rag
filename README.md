@@ -20,17 +20,18 @@ Evaluated on 500 English samples balanced across the five TISER categories:
 
 | | F1 | chrF | NormEM | EM | SoftEM | EngLeak |
 |---|---:|---:|---:|---:|---:|---:|
-| **Overall** | 0.921 | 90.18 | 0.844 | 0.838 | 0.912 | 0.000 |
+| **Overall** | 0.912 | 89.38 | 0.840 | 0.836 | 0.904 | 0.000 |
 
 Per dataset:
 
 | Dataset | F1 | chrF | NormEM | EM | SoftEM | N |
 |---|---:|---:|---:|---:|---:|---:|
-| timeqa_easy | 0.974 | 97.98 | 0.960 | 0.960 | 0.980 | 100 |
-| timeqa_hard | 0.981 | 98.39 | 0.950 | 0.950 | 0.960 | 100 |
-| tempreason_l3 | 0.956 | 96.03 | 0.950 | 0.950 | 0.950 | 100 |
-| tempreason_l2 | 0.840 | 85.05 | 0.810 | 0.810 | 0.810 | 100 |
-| tgqa | 0.854 | 73.46 | 0.550 | 0.520 | 0.860 | 100 |
+| timeqa_easy | 0.978 | 98.16 | 0.970 | 0.970 | 0.980 | 100 |
+| timeqa_hard | 0.977 | 98.13 | 0.940 | 0.940 | 0.960 | 100 |
+| tempreason_l3 | 0.948 | 95.24 | 0.940 | 0.940 | 0.940 | 100 |
+| tempreason_l2 | 0.830 | 84.04 | 0.800 | 0.800 | 0.800 | 100 |
+| tgqa | 0.829 | 71.35 | 0.550 | 0.530 | 0.840 | 100 |
+
 
 
 ### Four-language model — EN + IT + DE + FR (15 000 training samples)
@@ -160,7 +161,7 @@ on top of `Qwen/Qwen2.5-3B-Instruct` (4-bit NF4):
 
 | Adapter | Languages | Overall F1 (500-sample eval) | Link |
 |---|---|---:|---|
-| `en_15000_8gb_val_qlora` | EN | 0.921 (EN test) | [HF Hub](https://huggingface.co/arianmo47/en_15000_8gb_val_qlora) |
+| `en_15000_8gb_val_qlora` | EN | 0.912 (EN test) | [HF Hub](https://huggingface.co/arianmo47/en_15000_8gb_val_qlora) |
 | `de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora` | EN+IT+DE+FR | 0.888 (mixed test) | [HF Hub](https://huggingface.co/arianmo47/de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora) |
 
 Load one directly from the Hub:
