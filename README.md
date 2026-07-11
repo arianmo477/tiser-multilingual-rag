@@ -1,12 +1,14 @@
-# tiser-multilingual
+# tiser-multilingual-rag
 
-Multilingual temporal reasoning with a small language model — a two-part extension of [TISER](https://aclanthology.org/2025.acl-long.1358/) (Bazaga et al., ACL 2025):
+Multilingual and retrieval-augmented temporal reasoning with a small language model — a reproduction of [TISER](https://aclanthology.org/2025.acl-long.1358/) (Bazaga et al., ACL 2025) plus two extensions:
 
-1. **Small-model adaptation** — Qwen2.5-3B-Instruct + QLoRA on a single 8 GB GPU, matching the spirit of the original paper's reasoning pipeline without requiring 40+ GB of VRAM.
+**Base: small-model TISER** — Qwen2.5-3B-Instruct + QLoRA on a single 8 GB GPU, matching the spirit of the original paper's reasoning pipeline without requiring 40+ GB of VRAM.
 
-2. **Multilingual extension** — an NLLB-based translation pipeline that produces structurally faithful Italian, German, and French training data, enabling a single fine-tuned model to reason temporally across languages.
+1. **Multilingual extension** — an NLLB-based translation pipeline that produces structurally faithful Italian, German, and French training data, enabling a single fine-tuned model to reason temporally across languages.
 
-The original TISER paper uses Qwen2.5-7B and Mistral-7B on English only. This project reaches strong English-only performance with a 3 B model and extends the same temporal-reasoning pipeline to multilingual EN · IT · DE · FR training. A third component adds **retrieval-augmented generation (RAG) as a controlled ablation**, testing when retrieval helps a benchmark whose samples are already self-contained.
+2. **RAG extension** — **retrieval-augmented generation as a controlled ablation**, testing when retrieval helps a benchmark whose samples are already self-contained: a FAISS index over training questions injects the most similar solved example as a few-shot demonstration.
+
+The original TISER paper uses Qwen2.5-7B and Mistral-7B on English only. This project reaches strong English-only performance with a 3 B model, extends the same temporal-reasoning pipeline to multilingual EN · IT · DE · FR training, and shows that on this self-contained benchmark retrieval and fine-tuning act largely as substitutes.
 
 ---
 
@@ -31,8 +33,6 @@ Per dataset:
 | tempreason_l3 | 0.948 | 95.24 | 0.940 | 0.940 | 0.940 | 100 |
 | tempreason_l2 | 0.830 | 84.04 | 0.800 | 0.800 | 0.800 | 100 |
 | tgqa | 0.829 | 71.35 | 0.550 | 0.530 | 0.840 | 100 |
-
-
 
 ### Four-language model — EN + IT + DE + FR (15 000 training samples)
 
@@ -64,11 +64,11 @@ but partial, and English leakage rises an order of magnitude:
 
 | Test set | F1 | chrF | NormEM | EM | SoftEM | EngLeak | Multilingual model F1 |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| IT | 0.808 | 82.42 | 0.678 | 0.674 | 0.748 | 0.062 | 0.887 |
-| FR | 0.795 | 80.66 | 0.658 | 0.652 | 0.714 | 0.058 | 0.834 |
-| DE | 0.783 | 79.33 | 0.674 | 0.672 | 0.758 | 0.048 | 0.905 |
+| IT | 0.808 | 82.42 | 0.678 | 0.674 | 0.748 | 0.062 | 0.886 |
+| FR | 0.795 | 80.66 | 0.658 | 0.652 | 0.714 | 0.058 | 0.865 |
+| DE | 0.783 | 79.33 | 0.674 | 0.672 | 0.758 | 0.048 | 0.890 |
 
-The multilingual fine-tune gains 4–12 F1 over zero-shot transfer and cuts
+The multilingual fine-tune gains 7–11 F1 over zero-shot transfer and cuts
 EngLeak from ~5–6 % to ≤ 0.8 %.
 
 ### RAG ablation (Experiment 1)
@@ -109,7 +109,7 @@ French scores slightly lower than the other languages due to translation quality
 
 ## What this adds over the original TISER paper
 
-| | TISER original | tiser-multilingual |
+| | TISER original | tiser-multilingual-rag |
 |---|---|---|
 | Model | 7 B Qwen2.5 / Mistral | **3 B** Qwen2.5-Instruct |
 | VRAM | ~40 GB | **8 GB** QLoRA 4-bit NF4 |
@@ -123,8 +123,8 @@ French scores slightly lower than the other languages due to translation quality
 ## Installation
 
 ```bash
-git clone https://github.com/arianmo477/MultilingualTemporalReasoningTISER.git
-cd MultilingualTemporalReasoningTISER
+git clone https://github.com/arianmo477/tiser-multilingual-rag.git
+cd tiser-multilingual-rag
 
 # Recommended: create the environment from environment.yml
 conda env create -f environment.yml
@@ -162,7 +162,7 @@ on top of `Qwen/Qwen2.5-3B-Instruct` (4-bit NF4):
 | Adapter | Languages | Overall F1 (500-sample eval) | Link |
 |---|---|---:|---|
 | `en_15000_8gb_val_qlora` | EN | 0.912 (EN test) | [HF Hub](https://huggingface.co/arianmo47/en_15000_8gb_val_qlora) |
-| `de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora` | EN+IT+DE+FR | 0.888 (mixed test) | [HF Hub](https://huggingface.co/arianmo47/de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora) |
+| `de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora` | EN+IT+DE+FR | 0.887 (mixed test) | [HF Hub](https://huggingface.co/arianmo47/de_it_fr_en_mixed_tiser_full_15000_8gb_val_qlora) |
 
 Load one directly from the Hub:
 
@@ -189,7 +189,7 @@ and Hub ids).
 
 ### Project structure
 ```bash
-tiser-multilingual/
+tiser-multilingual-rag/
 │
 ├── multilingual_rag_tiser/
 │   ├── training/
